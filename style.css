@@ -1,10 +1,70 @@
+/* Variables for colors, shadows, and radius from the provided images */
+:root {
+    /* Primary Brand Color */
+    --primary-blue1: #0B83D9;
+    --primary-blue2: #0DE91E; /* This seems like a typo, perhaps #007bff from prev code? Or should be another blue. Sticking to the image provided */
+    --primary-blue3: #3EACFA;
+    --primary-blue4: #73C5FF;
+
+    /* Secondary Brand Color */
+    --secondary-darkblue1: #0B83D9; /* Seems duplicate of primary-blue1, but I'll use it as distinct */
+    --secondary-darkblue2: #0DE91E; /* Another potential typo in image, will keep as provided */
+    --secondary-darkblue3: #3EACFA;
+    --secondary-darkblue4: #5865BA;
+
+    /* Tertiary Brand Color (Orange) */
+    --tertiary-orange1: #F26C0C;
+    --tertiary-orange2: #FF661A;
+    --tertiary-orange3: #FF9040;
+    --tertiary-orange4: #FFA96A;
+
+    /* Neutral Colors */
+    --neutral-text1: #17181A;
+    --neutral-text2: #666C80;
+    --neutral-text3: #9BA1B3;
+    --neutral-background1: #E1E2E6;
+    --neutral-background2: #F7F8FA;
+    --neutral-background3: #FFFFFF;
+
+    /* Notification Colors */
+    --notification-green1: #07D95A;
+    --notification-green2: #9CF0BD;
+    --notification-red1: #F8193E;
+    --notification-red2: #FCA3B2;
+
+    /* Shadows (blur, Y-offset, A% #263699) */
+    --shadow-small: 0px 1px 4px rgba(38, 54, 153, 0.06); /* blur 4, Y 1, A 6% */
+    --shadow-normal: 0px 4px 8px rgba(38, 54, 153, 0.06); /* blur 8, Y 4, A 6% */
+    --shadow-medium: 0px 8px 16px rgba(38, 54, 153, 0.04); /* blur 16, Y 8, A 4% */
+    --shadow-large: 0px 16px 32px rgba(38, 54, 153, 0.04); /* blur 32, Y 16, A 4% */
+
+    /* Radius */
+    --radius-small: 4px;
+    --radius-normal: 8px;
+    --radius-medium: 16px;
+    --radius-large: 24px;
+
+    /* Spacing (using 8px base grid system) */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-2xl: 40px;
+    --spacing-3xl: 48px;
+    --spacing-4xl: 56px;
+    --spacing-5xl: 64px;
+    --spacing-6xl: 80px;
+    --spacing-7xl: 120px;
+}
+
 /* General & Body */
 body {
     font-family: 'Cairo', sans-serif;
     direction: rtl;
-    background-color: #eef5f9; /* Light blueish background */
+    background-color: var(--neutral-background2); /* Light blueish background */
     margin: 0;
-    color: #333;
+    color: var(--neutral-text1);
     line-height: 1.6;
     display: flex; /* For dashboard layout on desktop */
     min-height: 100vh; /* Ensure full viewport height */
@@ -13,45 +73,45 @@ body {
 
 /* Base Styles for all pages (Buttons, Inputs, Cards) */
 .btn, .btn-login {
-    padding: 10px 18px;
+    padding: var(--spacing-sm) var(--spacing-md);
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-normal); /* Adjusted from 6px */
     font-size: 16px;
     cursor: pointer;
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
     font-weight: 600;
     text-decoration: none; /* For button-like links */
 }
 
 .btn-primary {
-    background-color: #007bff; /* Primary blue */
-    color: white;
+    background-color: var(--primary-blue1); /* Primary blue */
+    color: var(--neutral-background3); /* White text */
 }
 .btn-primary:hover {
-    background-color: #0056b3;
-    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+    background-color: var(--primary-blue3); /* Lighter blue on hover */
+    box-shadow: var(--shadow-small); /* Small shadow on hover */
 }
 
 .btn-secondary {
-    background-color: #6c757d; /* Grey */
-    color: white;
+    background-color: var(--neutral-text3); /* Grey */
+    color: var(--neutral-text1); /* Dark text */
 }
 .btn-secondary:hover {
-    background-color: #5a6268;
-    box-shadow: 0 4px 10px rgba(108, 117, 125, 0.2);
+    background-color: var(--neutral-text2); /* Darker grey */
+    box-shadow: var(--shadow-small);
 }
 
 .btn-info { /* Used for print button */
-    background-color: #17a2b8;
-    color: white;
+    background-color: var(--primary-blue3); /* Lighter blue */
+    color: var(--neutral-background3);
 }
 .btn-info:hover {
-    background-color: #138496;
-    box-shadow: 0 4px 10px rgba(23, 162, 184, 0.2);
+    background-color: var(--primary-blue1);
+    box-shadow: var(--shadow-small);
 }
 
 .btn-icon {
@@ -59,73 +119,82 @@ body {
     height: 44px;
     padding: 0;
     font-size: 20px; /* Icon size */
+    border: 1px solid var(--neutral-background1);
+    background-color: var(--neutral-background3);
 }
+.btn-icon:hover {
+    background-color: var(--neutral-background2);
+    border-color: var(--primary-blue1);
+    box-shadow: var(--shadow-small);
+}
+
 
 .input-icon-group {
     position: relative;
     flex-grow: 1;
 }
 .input-icon-group input {
-    padding-right: 40px; /* Make space for icon */
-    padding-left: 15px; /* Default padding for input text */
+    padding-right: var(--spacing-5xl); /* Make space for icon */
+    padding-left: var(--spacing-md); /* Default padding for input text */
 }
 .input-icon-group .icon-right {
     position: absolute;
-    right: 12px;
+    right: var(--spacing-md);
     top: 50%;
     transform: translateY(-50%);
-    color: #888;
+    color: var(--neutral-text3); /* Lighter grey for icon */
     font-size: 18px;
 }
 
 .form-input, .form-select, .form-textarea {
     width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #c2d1e2; /* Softer border */
-    border-radius: 8px; /* More rounded corners */
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--neutral-background1); /* Softer border */
+    border-radius: var(--radius-normal); /* More rounded corners */
     font-size: 16px;
     box-sizing: border-box;
     font-family: 'Cairo', sans-serif;
-    background-color: #fcfdff;
+    background-color: var(--neutral-background3);
+    color: var(--neutral-text1);
     transition: all 0.3s ease;
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
-    border-color: #007bff;
+    border-color: var(--primary-blue1);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Shadow with primary blue */
+    background-color: var(--neutral-background3);
 }
 
 .card {
-    background-color: #ffffff;
-    border-radius: 12px; /* More rounded cards */
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); /* Softer shadow */
-    padding: 25px;
-    margin-bottom: 25px;
+    background-color: var(--neutral-background3);
+    border-radius: var(--radius-normal); /* More rounded cards */
+    box-shadow: var(--shadow-normal); /* Normal shadow for cards */
+    padding: var(--spacing-lg); /* Padding 25px */
+    margin-bottom: var(--spacing-lg); /* Margin bottom 25px */
 }
 
 .error-message {
-    color: #dc3545;
-    margin-top: 15px;
+    color: var(--notification-red1);
+    margin-top: var(--spacing-md);
     font-size: 14px;
     text-align: center;
-    background-color: #ffe8e8;
-    border: 1px solid #dc3545;
-    padding: 10px;
-    border-radius: 5px;
+    background-color: var(--notification-red2);
+    border: 1px solid var(--notification-red1);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-small);
 }
 
-/* Login Page Styles (Restored to initial simple design) */
+/* Login Page Styles (Restored to initial simple design with new theme variables) */
 .login-container {
-    background-color: #fff;
-    padding: 30px 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background-color: var(--neutral-background3);
+    padding: var(--spacing-xl) var(--spacing-2xl); /* 30px 40px */
+    border-radius: var(--radius-normal);
+    box-shadow: var(--shadow-normal);
     width: 100%;
     max-width: 400px;
     text-align: center;
-    margin: auto; /* Center vertically and horizontally */
+    margin: auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -135,47 +204,49 @@ body {
 }
 
 .login-container h2 {
-    color: #28a745; /* Green color for consistency with pharmacy theme from earlier */
-    margin-bottom: 25px;
+    color: var(--primary-blue1); /* Primary blue for consistency */
+    margin-bottom: var(--spacing-lg);
     font-weight: 700;
 }
 
 .login-container .form-group {
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-md);
     text-align: right;
 }
 
 .login-container .form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-sm);
     font-weight: 600;
-    color: #555;
+    color: var(--neutral-text2);
 }
 
 .login-container input[type="email"],
 .login-container input[type="password"] {
     width: 100%;
-    padding: 12px 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    padding: var(--spacing-md) var(--spacing-sm);
+    border: 1px solid var(--neutral-background1);
+    border-radius: var(--radius-small);
     font-size: 16px;
     box-sizing: border-box;
     font-family: 'Cairo', sans-serif;
+    background-color: var(--neutral-background3);
+    color: var(--neutral-text1);
 }
 
 .login-container input[type="email"]:focus,
 .login-container input[type="password"]:focus {
-    border-color: #28a745;
+    border-color: var(--primary-blue1);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
 }
 
 .btn-login { /* Specific style for login page button */
-    background-color: #28a745;
-    color: white;
-    padding: 12px 20px;
+    background-color: var(--primary-blue1);
+    color: var(--neutral-background3);
+    padding: var(--spacing-md) var(--spacing-lg);
     border: none;
-    border-radius: 5px;
+    border-radius: var(--radius-small);
     font-size: 18px;
     cursor: pointer;
     transition: background-color 0.3s ease;
@@ -184,75 +255,85 @@ body {
 }
 
 .btn-login:hover {
-    background-color: #218838;
+    background-color: var(--primary-blue3);
 }
 
 /* Dashboard Layout (with Sidebar) */
 #app-wrapper {
     display: flex;
     width: 100%;
-    position: relative; /* For sidebar positioning */
+    position: relative;
 }
 
 /* Sidebar Navigation */
 .sidebar {
     width: 250px; /* Fixed width for desktop */
-    background-color: #2c3e50; /* Darker blue/grey for sidebar */
-    color: white;
-    padding: 20px;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    background-color: var(--secondary-darkblue4); /* Dark blue/grey from secondary palette */
+    color: var(--neutral-background3);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-normal);
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease-in-out;
-    z-index: 500; /* Above main content */
-    /* For mobile: */
-    position: fixed;
+    z-index: 500;
+    position: fixed; /* Always fixed */
     top: 0;
-    right: -250px; /* Hidden by default on mobile */
+    right: 0;
     height: 100%;
-    transform: translateX(0); /* Reset for mobile transition */
+    transform: translateX(0); /* Visible by default on desktop */
 }
 
-.sidebar.open {
-    transform: translateX(-250px); /* Slide in from right on mobile */
-    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
+/* Hide sidebar by default on mobile */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(250px); /* Hidden off-screen to the right */
+    }
+    .sidebar.open {
+        transform: translateX(0); /* Slide in to be visible */
+    }
 }
+
 
 .sidebar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: var(--spacing-xl);
 }
 
 .sidebar-title {
     font-size: 26px;
     font-weight: 700;
-    color: #007bff; /* Primary blue for title */
+    color: var(--primary-blue3);
 }
 
 .close-sidebar-btn {
     background: none;
     border: none;
-    color: white;
+    color: var(--neutral-background3);
     font-size: 24px;
     cursor: pointer;
     display: none; /* Hidden by default, shown on mobile */
 }
+@media (max-width: 768px) {
+    .close-sidebar-btn {
+        display: block; /* Show close button on mobile */
+    }
+}
 
 .sidebar-nav {
-    flex-grow: 1; /* Occupy available space */
+    flex-grow: 1;
 }
 
 .sidebar-nav .nav-item {
     display: flex;
     align-items: center;
-    gap: 15px;
-    color: #b0c4de; /* Lighter text for non-active */
+    gap: var(--spacing-md);
+    color: var(--neutral-background1);
     text-decoration: none;
-    padding: 15px 20px;
-    margin-bottom: 10px;
-    border-radius: 8px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+    border-radius: var(--radius-normal);
     transition: background-color 0.3s ease, color 0.3s ease;
     font-size: 18px;
     font-weight: 500;
@@ -263,18 +344,18 @@ body {
 }
 
 .sidebar-nav .nav-item:hover {
-    background-color: #34495e; /* Slightly darker on hover */
-    color: white;
+    background-color: var(--secondary-darkblue3); /* Slightly darker on hover */
+    color: var(--neutral-background3);
 }
 
 .sidebar-nav .nav-item.active {
-    background-color: #007bff; /* Active item background */
-    color: white;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    background-color: var(--primary-blue1);
+    color: var(--neutral-background3);
+    box-shadow: var(--shadow-small);
 }
 
 /* Main Content Area */
-.main-content, .form-page-wrapper { /* Apply to both dashboard and form pages */
+.main-content, .form-page-wrapper {
     flex-grow: 1;
     padding: 0;
     display: flex;
@@ -283,14 +364,22 @@ body {
     margin-right: 250px; /* Push content to the left of sidebar */
     transition: margin-right 0.3s ease-in-out;
 }
+/* Adjust main content margin when sidebar is closed on mobile */
+@media (max-width: 768px) {
+    .main-content, .form-page-wrapper {
+        width: 100%; /* Full width on mobile */
+        margin-right: 0; /* No static margin */
+    }
+}
+
 
 .topbar {
-    background-color: #ffffff;
-    padding: 18px 25px;
+    background-color: var(--neutral-background3);
+    padding: var(--spacing-md) var(--spacing-lg); /* 18px 25px */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-small);
     z-index: 400;
 }
 
@@ -298,37 +387,42 @@ body {
     background: none;
     border: none;
     font-size: 24px;
-    color: #555;
+    color: var(--neutral-text2);
     cursor: pointer;
-    display: none; /* Hidden by default, shown on mobile */
+    display: none; /* Hidden by default */
+}
+@media (max-width: 768px) {
+    .menu-toggle-btn {
+        display: block; /* Show menu button on mobile */
+    }
 }
 
 .topbar-title {
     font-size: 22px;
     font-weight: 600;
-    color: #444;
+    color: var(--neutral-text1);
 }
 .back-btn { /* For product-form.html */
     background: none;
     border: none;
     font-size: 24px;
-    color: #555;
+    color: var(--neutral-text2);
     cursor: pointer;
-    margin-left: 15px; /* Space between back button and title */
+    margin-left: var(--spacing-md);
 }
 
 
-.content-area, .form-content-area { /* Apply to both content sections */
+.content-area, .form-content-area {
     flex-grow: 1;
-    padding: 25px;
-    background-color: #eef5f9;
+    padding: var(--spacing-lg); /* 25px */
+    background-color: var(--neutral-background2);
 }
 
 /* Controls Section (Search, Filter, Add Button) */
 .controls-section {
     display: flex;
-    flex-wrap: wrap; /* Allow wrapping */
-    gap: 15px; /* Spacing between items */
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
     justify-content: space-between;
     align-items: center;
 }
@@ -336,24 +430,24 @@ body {
 .search-filter-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: var(--spacing-md);
     flex-grow: 1;
 }
 
 .search-input, .filter-select {
     flex-grow: 1;
-    min-width: 180px; /* Allow shrinking */
+    min-width: 180px;
 }
 
 /* Products Table */
 .products-table-card {
-    padding: 0; /* Table content will have its own padding */
-    overflow: hidden; /* For rounded corners */
+    padding: 0;
+    overflow: hidden;
 }
 
 .table-responsive {
-    overflow-x: auto; /* Enable horizontal scrolling for tables */
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .products-table {
@@ -363,39 +457,39 @@ body {
 
 .products-table th,
 .products-table td {
-    padding: 15px 20px;
+    padding: var(--spacing-md) var(--spacing-lg); /* 15px 20px */
     text-align: right;
     font-size: 15px;
-    border-bottom: 1px solid #e0e9f1; /* Lighter border */
+    border-bottom: 1px solid var(--neutral-background1); /* Lighter border */
     white-space: nowrap; /* Prevent text wrapping in desktop */
 }
 
 .products-table th {
-    background-color: #f7f9fc;
+    background-color: var(--neutral-background2);
     font-weight: 700;
-    color: #555;
+    color: var(--neutral-text2);
     text-transform: uppercase;
     font-size: 14px;
 }
 
 .products-table tbody tr:nth-child(even) {
-    background-color: #fcfdff;
+    background-color: var(--neutral-background3);
 }
 
 .products-table tbody tr:hover {
-    background-color: #e6f2ff; /* Light blue hover */
+    background-color: var(--neutral-background2); /* Light blueish hover */
 }
 
 .products-table td .action-buttons-group {
     display: flex;
-    gap: 8px; /* Space between action buttons */
-    flex-wrap: wrap; /* Allow wrapping on small screens */
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
 }
 
 .products-table td .action-button {
     padding: 8px 12px;
     font-size: 14px;
-    border-radius: 5px;
+    border-radius: var(--radius-small);
     gap: 5px;
     white-space: nowrap;
 }
@@ -406,26 +500,26 @@ body {
 
 
 /* Status Indicators (remain same color scheme) */
-.expired-product { background-color: #ffe0e0; font-weight: bold; color: #dc3545; }
-.expiring-soon { background-color: #fffacd; font-weight: bold; color: #ffc107; }
-.low-stock { background-color: #ffecc0; font-weight: bold; color: #fd7e14; }
+.expired-product { background-color: var(--notification-red2); font-weight: bold; color: var(--notification-red1); }
+.expiring-soon { background-color: var(--tertiary-orange4); font-weight: bold; color: var(--tertiary-orange1); }
+.low-stock { background-color: var(--tertiary-orange4); font-weight: bold; color: var(--tertiary-orange1); } /* Reusing orange for low stock */
 
 .no-data-message, .error-message-cell {
     text-align: center;
-    padding: 30px;
-    color: #666;
+    padding: var(--spacing-xl);
+    color: var(--neutral-text2);
     font-size: 18px;
     font-weight: 500;
 }
 
 .loading-spinner {
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #007bff; /* Spinner color */
+    border: 5px solid var(--neutral-background1);
+    border-top: 5px solid var(--primary-blue1);
     border-radius: 50%;
     width: 40px;
     height: 40px;
     animation: spin 1s linear infinite;
-    margin: 50px auto;
+    margin: var(--spacing-5xl) auto;
     display: none;
 }
 @keyframes spin {
@@ -446,40 +540,40 @@ body {
     background-color: rgba(0,0,0,0.6);
     justify-content: center;
     align-items: center;
-    padding: 20px; /* Padding around modal content */
+    padding: var(--spacing-lg);
     box-sizing: border-box;
 }
 
 .modal-content {
-    background-color: #fefefe;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    background-color: var(--neutral-background3);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-medium); /* More rounded modal corners */
+    box-shadow: var(--shadow-medium);
     width: 95%;
-    max-width: 700px; /* Adjusted max-width */
+    max-width: 700px;
     position: relative;
     animation: fadeIn 0.3s ease-out;
     box-sizing: border-box;
 }
 
 .close-button {
-    color: #aaa;
+    color: var(--neutral-text3);
     position: absolute;
-    top: 15px;
-    right: 20px;
+    top: var(--spacing-md);
+    right: var(--spacing-lg);
     font-size: 30px;
     font-weight: bold;
     cursor: pointer;
     transition: color 0.2s ease;
 }
 .close-button:hover {
-    color: #333;
+    color: var(--neutral-text1);
 }
 
 .modal-content h2 {
-    color: #007bff;
+    color: var(--primary-blue1);
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: var(--spacing-lg);
     font-weight: 700;
     font-size: 26px;
 }
@@ -491,8 +585,8 @@ body {
     background-color: black;
     position: relative;
     overflow: hidden;
-    margin-bottom: 20px;
-    border-radius: 8px;
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--radius-normal);
 }
 #interactive.viewport canvas, video {
     position: absolute;
@@ -500,12 +594,12 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ensure video fills the space */
+    object-fit: cover;
 }
 .scanner-results {
     font-size: 1.2em;
     font-weight: bold;
-    color: #007bff;
+    color: var(--primary-blue1);
     text-align: center;
     min-height: 30px;
 }
@@ -513,38 +607,38 @@ body {
 /* Print Barcode Modal Specific */
 .barcode-to-print {
     text-align: center;
-    padding: 20px;
-    border: 1px dashed #cccccc;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    background-color: #f9f9f9;
+    padding: var(--spacing-lg);
+    border: 1px dashed var(--neutral-text3);
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--radius-normal);
+    background-color: var(--neutral-background2);
 }
 .barcode-to-print svg {
     max-width: 100%;
     height: auto;
     display: block;
-    margin: 10px auto;
+    margin: var(--spacing-sm) auto;
 }
 .barcode-to-print p {
     font-size: 18px;
     font-weight: 600;
-    margin: 5px 0;
-    color: #333;
+    margin: var(--spacing-xs) 0;
+    color: var(--neutral-text1);
 }
 
 /* --- Form Page (product-form.html) Specific Styles --- */
 .product-form {
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    padding: 30px;
+    background-color: var(--neutral-background3);
+    border-radius: var(--radius-normal);
+    box-shadow: var(--shadow-normal);
+    padding: var(--spacing-xl);
 }
 
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px; /* Spacing between form groups */
-    margin-bottom: 30px;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
 }
 
 .form-group {
@@ -554,15 +648,15 @@ body {
 
 .form-group label {
     display: block;
-    margin-bottom: 10px;
+    margin-bottom: var(--spacing-sm);
     font-weight: 600;
-    color: #4a4a4a;
+    color: var(--neutral-text2);
     font-size: 16px;
 }
 
-.input-group { /* For barcode input and buttons */
+.input-group {
     display: flex;
-    gap: 10px;
+    gap: var(--spacing-sm);
     align-items: center;
 }
 .input-group .form-input {
@@ -571,19 +665,19 @@ body {
 
 .generated-barcode {
     display: block;
-    margin-top: 15px;
+    margin-top: var(--spacing-md);
     max-width: 100%;
     height: auto;
-    border: 1px solid #eee;
-    padding: 5px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
+    border: 1px solid var(--neutral-background1);
+    padding: var(--spacing-xs);
+    background-color: var(--neutral-background2);
+    border-radius: var(--radius-small);
 }
 
 .btn-lg {
-    padding: 15px 30px;
+    padding: var(--spacing-md) var(--spacing-xl);
     font-size: 19px;
-    margin-top: 30px;
+    margin-top: var(--spacing-xl);
     width: auto;
     display: block;
     margin-left: auto;
@@ -593,36 +687,36 @@ body {
 /* Custom Alert/Notification Styles */
 .custom-alert-container {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
     z-index: 2000;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    pointer-events: none; /* Allow clicks to pass through */
+    gap: var(--spacing-sm);
+    pointer-events: none;
 }
 
 .custom-alert {
-    background-color: #e6f7ed; /* Green for success */
-    color: #1a7e43;
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background-color: var(--notification-green2); /* Green for success */
+    color: var(--notification-green1);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-normal);
+    box-shadow: var(--shadow-small);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-sm);
     opacity: 0;
     animation: slideInFromRight 0.4s forwards, fadeOut 0.5s 2.5s forwards;
     min-width: 250px;
     max-width: 350px;
     font-size: 15px;
     font-weight: 500;
-    pointer-events: auto; /* Re-enable clicks on the alert itself */
+    pointer-events: auto;
 }
 
 .custom-alert.error {
-    background-color: #ffe8e8; /* Red for error */
-    color: #dc3545;
+    background-color: var(--notification-red2); /* Red for error */
+    color: var(--notification-red1);
 }
 
 .custom-alert i {
@@ -651,28 +745,26 @@ body {
 /* Mobile adjustments (up to 768px) */
 @media (max-width: 768px) {
     body {
-        /* On mobile, body doesn't use flex directly for layout */
-        display: block;
+        display: block; /* Override flex on body for mobile */
     }
 
     /* Login Page Mobile */
     .login-container {
-        padding: 25px;
-        margin: 20px auto;
-        min-height: unset; /* Remove min-height */
+        padding: var(--spacing-lg);
+        margin: var(--spacing-md) auto;
+        min-height: unset;
         height: auto;
     }
     .login-container h2 {
         font-size: 24px;
     }
 
-    /* Sidebar on mobile */
+    /* Sidebar on mobile (fixed position, hidden by default) */
     .sidebar {
-        right: -250px; /* Hidden by default */
+        transform: translateX(100%); /* Completely off-screen to the right */
     }
-
     .sidebar.open {
-        transform: translateX(-250px); /* Slide in from right */
+        transform: translateX(0); /* Slides in */
     }
 
     .close-sidebar-btn {
@@ -681,13 +773,13 @@ body {
 
     /* Main content on mobile */
     .main-content, .form-page-wrapper {
-        width: 100%; /* Full width */
+        width: 100%;
         margin-right: 0; /* No static margin */
     }
 
     /* Topbar on mobile */
     .topbar {
-        padding: 15px 10px;
+        padding: var(--spacing-md) var(--spacing-sm);
         position: sticky;
         top: 0;
         z-index: 300;
@@ -698,9 +790,9 @@ body {
     .topbar-title {
         flex-grow: 1;
         text-align: center;
-        margin-right: 40px; /* Push title left to make space for toggle */
+        margin-right: var(--spacing-3xl); /* Push title left for toggle button */
     }
-    .topbar .back-btn { /* For product-form.html */
+    .topbar .back-btn {
         margin-right: 0;
         margin-left: auto;
     }
@@ -708,82 +800,79 @@ body {
 
     /* Content area on mobile */
     .content-area, .form-content-area {
-        padding: 15px;
+        padding: var(--spacing-md);
     }
 
     /* Controls section on mobile */
     .controls-section {
         flex-direction: column;
         align-items: stretch;
-        gap: 10px;
-        padding: 15px; /* Adjust padding for mobile cards */
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
     }
     .search-filter-group {
         flex-direction: column;
-        gap: 10px;
+        gap: var(--spacing-sm);
         width: 100%;
     }
     .search-input, .filter-select, .btn {
         width: 100%;
-        min-width: unset; /* Remove min-width constraint */
+        min-width: unset;
     }
 
     /* Table adjustments for mobile */
     .products-table th,
     .products-table td {
-        padding: 10px 12px; /* Smaller padding */
-        font-size: 13px; /* Smaller font for table on mobile */
-        white-space: normal; /* Allow text wrapping in table cells for better fit */
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 13px;
+        white-space: normal;
     }
-    /* Hide less critical columns on mobile to save space */
-    .products-table th:nth-child(2), /* Quantity (now 2nd) */
-    .products-table td:nth-child(2) {
-        /* No, keep quantity. Re-evaluate which columns to hide */
-    }
-    /* Let's adjust what's visible for mobile table for better use of space */
-    .products-table th:not(:first-child):not(:nth-child(3)):not(:nth-child(4)):not(:last-child),
-    .products-table td:not(:first-child):not(:nth-child(3)):not(:nth-child(4)):not(:last-child) {
-        /* Hide Scientific Name, Purchase Price, Supplier, Barcode if space is tight */
-        /* For this example, I'll keep it as the HTML has only these visible columns now */
-        /* If you wanted to hide more for tighter mobile view, you'd target them here */
+    /* Hide less critical columns on mobile */
+    .products-table th:nth-child(2), /* Scientific Name - hidden via JS for simplicity, but if existed here... */
+    .products-table td:nth-child(2),
+    .products-table th:nth-child(4), /* Purchase Price - hidden via JS... */
+    .products-table td:nth-child(4),
+    .products-table th:nth-child(6), /* Supplier - hidden via JS... */
+    .products-table td:nth-child(6) {
+        /* If these columns existed in HTML, you'd apply display:none here */
     }
 
     /* Action buttons in table mobile */
     .products-table td .action-buttons-group {
-        flex-direction: column; /* Stack buttons vertically */
-        gap: 5px;
-        align-items: flex-end; /* Align to right */
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        align-items: flex-end;
     }
     .products-table td .action-button {
-        width: 100%; /* Full width for stacked buttons */
-        justify-content: flex-end; /* Align text/icon to right */
-        padding: 8px 10px;
+        width: 100%;
+        justify-content: flex-end;
+        padding: var(--spacing-sm) var(--spacing-md);
     }
 
     /* Form page adjustments */
     .product-form {
-        padding: 20px;
+        padding: var(--spacing-lg);
     }
     .form-grid {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: var(--spacing-lg);
     }
     .btn-lg {
         width: 100%;
-        padding: 12px 20px;
+        padding: var(--spacing-md) var(--spacing-lg);
         font-size: 17px;
     }
 
     .custom-alert-container {
         top: auto;
-        bottom: 20px; /* Alerts from bottom on mobile */
-        right: 10px;
-        left: 10px;
+        bottom: var(--spacing-lg);
+        right: var(--spacing-md);
+        left: var(--spacing-md);
         width: auto;
     }
     .custom-alert {
         max-width: none;
-        width: 100%; /* Full width alerts on mobile */
+        width: 100%;
     }
 }
 
@@ -793,7 +882,7 @@ body {
         background-color: #fff;
         margin: 0;
         padding: 0;
-        display: block; /* Override flex for printing */
+        display: block;
     }
     .sidebar, .topbar, .controls-section, .modal,
     .action-buttons-group, .menu-toggle-btn, .close-sidebar-btn,
