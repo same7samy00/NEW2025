@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - إدارة المنتجات</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <h2>تسجيل الدخول</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">البريد الإلكتروني:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">كلمة المرور:</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit">دخول</button>
+            <div id="errorMessage" class="error-message"></div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9eufzO00_JtbdVoDrw-bJfF1PY3meYoE",
+            authDomain: "new2025-d2fba.firebaseapp.com",
+            projectId: "new2025-d2fba",
+            storageBucket: "new2025-d2fba.firebasestorage.app",
+            messagingSenderId: "239931222059",
+            appId: "1:239931222059:web:6275e5aa6577fb14f4e26e",
+            measurementId: "G-3F4TJ0K34J"
+        };
+
+        // تهيئة Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // الحصول على عناصر النموذج
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorMessageDiv = document.getElementById('errorMessage');
+
+        // التعامل مع إرسال النموذج
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // منع الإرسال الافتراضي للصفحة
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            errorMessageDiv.textContent = ''; // مسح أي رسائل خطأ سابقة
+
+            try {
+                // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                console.log("تم تسجيل الدخول بنجاح!", userCredential.user);
+                // هنا، بعد تسجيل الدخول بنجاح، يمكنك إعادة توجيه المستخدم لصفحة إدارة المنتجات
+                window.location.href = "dashboard.html"; // افترض أن لديك ملف dashboard.html
+            } catch (error) {
+                // عرض رسالة الخطأ
+                console.error("خطأ في تسجيل الدخول:", error.message);
+                switch (error.code) {
+                    case 'auth/invalid-email':
+                        errorMessageDiv.textContent = 'البريد الإلكتروني غير صالح.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessageDiv.textContent = 'هذا الحساب معطل.';
+                        break;
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        errorMessageDiv.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+                        break;
+                    default:
+                        errorMessageDiv.textContent = 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
