@@ -1,8 +1,8 @@
-// Import Firebase SDKs
+// app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+import { auth, checkAuthStateAndRedirect, signOutUser } from './auth.js'; // Import auth and check function
 
 // Your web app's Firebase configuration - REPLACE WITH YOUR ACTUAL CONFIG
 const firebaseConfig = {
@@ -15,33 +15,50 @@ const firebaseConfig = {
     measurementId: "G-3F4TJ0K34J"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// --- Global DOM Elements ---
-// Login Page
-const loginForm = document.getElementById('loginForm');
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const errorMessageDiv = document.getElementById('errorMessage');
+// --- Custom Alert/Notification Function ---
+export function showCustomAlert(message, type = 'success') {
+    const alertContainer = document.getElementById('customAlertContainer');
+    if (!alertContainer) return;
 
-// Dashboard Page
-const logoutBtnTop = document.getElementById('logoutBtnTop');
-const logoutBtnBottom = document.getElementById('logoutBtnBottom'); // New for bottom nav
+    const alertDiv = document.createElement('div');
+    alertDiv.classList.add('custom-alert');
+    if (type === 'error') {
+        alertDiv.classList.add('error');
+    }
+
+    const iconClass = type === 'success' ? 'fas fa-check-circle' : 'fas fa-times-circle';
+    alertDiv.innerHTML = `<i class="${iconClass}"></i><span>${message}</span>`;
+
+    alertContainer.prepend(alertDiv); // Add to top
+
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000); // Remove after 3 seconds
+}
+
+// --- Global DOM Elements for Dashboard & Product Form ---
 const productsTableBody = document.getElementById('productsTableBody');
 const noProductsMessage = document.getElementById('noProductsMessage');
 const loadingSpinner = document.getElementById('loadingSpinner');
-const addProductBtn = document.getElementById('addProductBtn');
 const searchInput = document.getElementById('searchInput');
 const filterCategory = document.getElementById('filterCategory');
+const addProductBtn = document.getElementById('addProductBtn');
+const scanSearchBarcodeBtn = document.getElementById('scanSearchBarcodeBtn'); // New button for search scan
 
-// Product Modal elements
-const productModal = document.getElementById('productModal');
-const closeButtons = document.querySelectorAll('.close-button'); // For all modals
-const modalTitle = document.getElementById('modalTitle');
+// Modals
+const scannerModal = document.getElementById('scannerModal');
+const closeScannerBtn = document.getElementById('closeScanner');
+const interactiveViewport = document.getElementById('interactive');
+const scannerResults = document.getElementById('scannerResults');
+const printBarcodeModal = document.getElementById('printBarcodeModal');
+const closePrintBarcodeBtn = document.getElementById('closePrintBarcode');
+const barcodeToPrintDiv = document.getElementById('barcodeToPrint');
+
+// Product Form elements (used in product-form.html)
 const productForm = document.getElementById('productForm');
 const productIdInput = document.getElementById('productId');
 const tradeNameInput = document.getElementById('tradeName');
@@ -57,97 +74,70 @@ const subSubUnitsInput = document.getElementById('subSubUnits');
 const productionDateInput = document.getElementById('productionDate');
 const expiryDateInput = document.getElementById('expiryDate');
 const barcodeInput = document.getElementById('barcodeInput');
-const scanBarcodeBtn = document.getElementById('scanBarcodeBtn');
+const scanBarcodeBtn = document.getElementById('scanBarcodeBtn'); // For form barcode scan
 const generateBarcodeBtn = document.getElementById('generateBarcodeBtn');
 const generatedBarcodeSvg = document.getElementById('generatedBarcode');
 const supplierInput = document.getElementById('supplier');
 const minStockInput = document.getElementById('minStock');
-const productImageInput = document.getElementById('productImage');
-const currentProductImage = document.getElementById('currentProductImage');
 const formErrorMessage = document.getElementById('formErrorMessage');
+const formPageTitle = document.getElementById('formPageTitle'); // Title for product-form.html
 
-// Scanner Modal elements
-const scannerModal = document.getElementById('scannerModal');
-const closeScannerBtn = document.getElementById('closeScanner');
-const interactiveViewport = document.getElementById('interactive');
-const scannerResults = document.getElementById('scannerResults');
 
-// Print Barcode Modal elements
-const printBarcodeModal = document.getElementById('printBarcodeModal');
-const closePrintBarcodeBtn = document.getElementById('closePrintBarcode');
-const barcodeToPrintDiv = document.getElementById('barcodeToPrint');
+let allProductsData = []; // Store all products for client-side search/filter
 
-// --- Login Logic (for index.html) ---
-if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = emailInput.value;
-        const password = passwordInput.value;
-        errorMessageDiv.textContent = '';
-
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            window.location.href = "dashboard.html";
-        } catch (error) {
-            console.error("Login Error:", error);
-            switch (error.code) {
-                case 'auth/invalid-email':
-                    errorMessageDiv.textContent = 'البريد الإلكتروني غير صالح.';
-                    break;
-                case 'auth/user-disabled':
-                    errorMessageDiv.textContent = 'هذا الحساب معطل.';
-                    break;
-                case 'auth/user-not-found':
-                case 'auth/wrong-password':
-                    errorMessageDiv.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
-                    break;
-                default:
-                    errorMessageDiv.textContent = 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.';
-            }
-        }
-    });
-}
-
-// --- Dashboard Logic (for dashboard.html) ---
+// --- Dashboard Page Logic ---
 if (window.location.pathname.includes('dashboard.html')) {
-    let allProductsData = []; // Store all products for client-side search/filter
+    checkAuthStateAndRedirect(); // Check if user is logged in
 
-    // Check auth state on dashboard load
-    onAuthStateChanged(auth, (user) => {
+    // Sidebar Toggle
+    const sidebar = document.getElementById('sidebar');
+    const menuToggleBtn = document.getElementById('menuToggleBtn');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+    if (menuToggleBtn) {
+        menuToggleBtn.addEventListener('click', () => {
+            sidebar.classList.add('open');
+        });
+    }
+
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+        });
+    }
+
+    // Load products on dashboard load
+    auth.onAuthStateChanged(user => {
         if (user) {
-            console.log("User logged in:", user.email);
             loadProducts();
-        } else {
-            console.log("User not logged in. Redirecting to login.");
-            window.location.href = "index.html";
         }
     });
 
-    // Logout buttons
-    if (logoutBtnTop) {
-        logoutBtnTop.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                window.location.href = "index.html";
-            } catch (error) {
-                console.error("Logout Error:", error);
-                alert("حدث خطأ أثناء تسجيل الخروج. يرجى المحاولة مرة أخرى.");
-            }
-        });
-    }
-    if (logoutBtnBottom) { // For mobile bottom nav
-        logoutBtnBottom.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                window.location.href = "index.html";
-            } catch (error) {
-                console.error("Logout Error:", error);
-                alert("حدث خطأ أثناء تسجيل الخروج. يرجى المحاولة مرة أخرى.");
-            }
+    // Add Product button redirects to product-form.html
+    if (addProductBtn) {
+        addProductBtn.addEventListener('click', () => {
+            window.location.href = 'product-form.html';
         });
     }
 
-    // --- Product Management Functions ---
+    // Search input event listener
+    if (searchInput) {
+        searchInput.addEventListener('input', applySearchAndFilter);
+    }
+
+    // Filter select event listener
+    if (filterCategory) {
+        filterCategory.addEventListener('change', applySearchAndFilter);
+    }
+
+    // Scan for Search Barcode button
+    if (scanSearchBarcodeBtn) {
+        scanSearchBarcodeBtn.addEventListener('click', () => {
+            scannerResults.textContent = 'جاري البحث عن باركود...';
+            scannerModal.style.display = 'flex';
+            initBarcodeScanner(true); // Pass true to indicate it's for search
+        });
+    }
 
     // Function to calculate remaining days to expiry
     function getDaysUntilExpiry(expiryDateStr) {
@@ -168,7 +158,7 @@ if (window.location.pathname.includes('dashboard.html')) {
         allProductsData = []; // Clear previous data
 
         let productsRef = collection(db, 'products');
-        let q = query(productsRef, orderBy('lastUpdated', 'desc')); // Order by last updated
+        let q = query(productsRef, orderBy('lastUpdated', 'desc'));
 
         try {
             const productSnapshot = await getDocs(q);
@@ -183,12 +173,12 @@ if (window.location.pathname.includes('dashboard.html')) {
                 allProductsData.push({ id: doc.id, ...doc.data() });
             });
 
-            // Apply current search and filter
-            applySearchAndFilter();
+            applySearchAndFilter(); // Apply current search/filter after loading
 
         } catch (error) {
             console.error("Error loading products:", error);
-            productsTableBody.innerHTML = `<tr><td colspan="7" class="error-message-cell">حدث خطأ أثناء تحميل المنتجات. يرجى إعادة المحاولة.</td></tr>`;
+            productsTableBody.innerHTML = `<tr><td colspan="5" class="error-message-cell">حدث خطأ أثناء تحميل المنتجات. يرجى إعادة المحاولة.</td></tr>`;
+            showCustomAlert('حدث خطأ أثناء تحميل المنتجات.', 'error');
         } finally {
             loadingSpinner.style.display = 'none';
         }
@@ -230,17 +220,16 @@ if (window.location.pathname.includes('dashboard.html')) {
 
     // Display Products in Table
     function displayProducts(products) {
-        productsTableBody.innerHTML = ''; // Clear existing rows
+        productsTableBody.innerHTML = '';
         products.forEach(product => {
             const row = productsTableBody.insertRow();
             row.dataset.id = product.id;
 
-            // Apply styling for expiry/low stock
             const daysUntilExpiry = getDaysUntilExpiry(product.expiryDate);
             if (daysUntilExpiry !== null) {
                 if (daysUntilExpiry <= 0) {
                     row.classList.add('expired-product');
-                } else if (daysUntilExpiry <= 90) { // 3 months warning
+                } else if (daysUntilExpiry <= 90) {
                     row.classList.add('expiring-soon');
                 }
             }
@@ -248,432 +237,419 @@ if (window.location.pathname.includes('dashboard.html')) {
                 row.classList.add('low-stock');
             }
 
-            // Image thumbnail
-            const imgCell = row.insertCell();
-            if (product.imageUrl) {
-                const img = document.createElement('img');
-                img.src = product.imageUrl;
-                img.alt = product.tradeName;
-                img.classList.add('product-thumb');
-                imgCell.appendChild(img);
-            } else {
-                imgCell.textContent = 'لا توجد صورة';
-            }
-
+            // Columns displayed on dashboard (optimized for mobile)
             row.insertCell().textContent = product.tradeName || '';
-            // Scientific Name is hidden on mobile by CSS
-            const scientificNameCell = row.insertCell();
-            scientificNameCell.textContent = product.scientificName || '';
-            scientificNameCell.classList.add('hide-on-mobile'); // Add class for CSS hiding
-
             row.insertCell().textContent = product.quantity !== undefined ? `${product.quantity} ${product.unitType || 'علبة'}` : '';
-            
-            // Purchase Price is hidden on mobile by CSS
-            const purchasePriceCell = row.insertCell();
-            purchasePriceCell.textContent = product.purchasePrice !== undefined ? `${product.purchasePrice.toFixed(2)} EGP` : '';
-            purchasePriceCell.classList.add('hide-on-mobile'); // Add class for CSS hiding
-
             row.insertCell().textContent = product.salePrice !== undefined ? `${product.salePrice.toFixed(2)} EGP` : '';
-
-            // Calculate profit and hide on mobile
-            const profitCell = row.insertCell();
-            const profit = (product.salePrice - product.purchasePrice) * product.quantity;
-            profitCell.textContent = profit !== undefined && !isNaN(profit) ? `${profit.toFixed(2)} EGP` : 'N/A';
-            profitCell.classList.add('hide-on-mobile'); // Add class for CSS hiding
-
             row.insertCell().textContent = product.expiryDate || '';
-            row.insertCell().textContent = product.barcode || '';
-            
-            // Supplier is hidden on mobile by CSS
-            const supplierCell = row.insertCell();
-            supplierCell.textContent = product.supplier || '';
-            supplierCell.classList.add('hide-on-mobile'); // Add class for CSS hiding
-
-            // Actions Cell
+            // Barcode (full text on desktop, shortened on mobile)
+            const barcodeCell = row.insertCell();
+            barcodeCell.textContent = product.barcode || '';
+            // Action buttons
             const actionsCell = row.insertCell();
+            const actionsGroup = document.createElement('div');
+            actionsGroup.classList.add('action-buttons-group');
+
             const editBtn = document.createElement('button');
             editBtn.innerHTML = '<i class="fas fa-edit"></i> تعديل';
-            editBtn.classList.add('action-button', 'edit-button');
-            editBtn.addEventListener('click', () => openProductModalForEdit(product));
+            editBtn.classList.add('btn', 'btn-secondary', 'action-button', 'edit-button');
+            editBtn.addEventListener('click', () => {
+                window.location.href = `product-form.html?id=${product.id}`;
+            });
 
             const deleteBtn = document.createElement('button');
             deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> حذف';
-            deleteBtn.classList.add('action-button', 'delete-button');
-            deleteBtn.addEventListener('click', () => deleteProduct(product.id, product.imagePath));
+            deleteBtn.classList.add('btn', 'btn-secondary', 'action-button', 'delete-button');
+            deleteBtn.addEventListener('click', () => deleteProduct(product.id));
 
             const printBarcodeBtn = document.createElement('button');
             printBarcodeBtn.innerHTML = '<i class="fas fa-print"></i> باركود';
-            printBarcodeBtn.classList.add('action-button', 'print-barcode-button');
+            printBarcodeBtn.classList.add('btn', 'btn-secondary', 'action-button', 'print-barcode-button');
             printBarcodeBtn.addEventListener('click', () => openPrintBarcodeModal(product.barcode, product.tradeName));
 
-            actionsCell.appendChild(editBtn);
-            actionsCell.appendChild(deleteBtn);
-            actionsCell.appendChild(printBarcodeBtn);
+            actionsGroup.appendChild(editBtn);
+            actionsGroup.appendChild(deleteBtn);
+            actionsGroup.appendChild(printBarcodeBtn);
+            actionsCell.appendChild(actionsGroup);
         });
     }
 
     // Delete Product
-    async function deleteProduct(id, imagePath) {
-        if (confirm("هل أنت متأكد أنك تريد حذف هذا المنتج نهائيًا؟")) {
+    async function deleteProduct(id) {
+        if (confirm("هل أنت متأكد أنك تريد حذف هذا المنتج نهائيًا؟")) { // Replace with custom confirm later
             try {
-                // Delete image from Storage if exists
-                if (imagePath) {
-                    const imageRef = ref(storage, imagePath);
-                    await deleteObject(imageRef);
-                    console.log("Image deleted successfully from Storage.");
+                // Find the product data to get imagePath
+                const productToDelete = allProductsData.find(p => p.id === id);
+                if (productToDelete && productToDelete.imagePath) {
+                    const imageRef = ref(storage, productToDelete.imagePath);
+                    await deleteObject(imageRef).catch(e => console.warn("Could not delete old image:", e.message));
                 }
-                // Delete document from Firestore
                 await deleteDoc(doc(db, 'products', id));
-                console.log("Product deleted successfully from Firestore.");
-                loadProducts(); // Reload products
+                showCustomAlert("تم حذف المنتج بنجاح!", 'success');
+                loadProducts();
             } catch (error) {
                 console.error("Error deleting product:", error);
-                alert("حدث خطأ أثناء حذف المنتج. يرجى المحاولة مرة أخرى.");
+                showCustomAlert("حدث خطأ أثناء حذف المنتج. يرجى المحاولة مرة أخرى.", 'error');
             }
         }
     }
+}
 
-    // --- Modal Handling (Add/Edit Product) ---
+// --- Product Form Page Logic (product-form.html) ---
+if (window.location.pathname.includes('product-form.html')) {
+    checkAuthStateAndRedirect(); // Check if user is logged in
 
-    // Open Add Product Modal
-    addProductBtn.addEventListener('click', () => {
-        productForm.reset(); // Clear form
-        productIdInput.value = ''; // Clear product ID
-        modalTitle.textContent = 'إضافة منتج جديد';
-        currentProductImage.style.display = 'none'; // Hide image preview for new product
-        currentProductImage.src = '';
-        generatedBarcodeSvg.innerHTML = ''; // Clear barcode SVG
-        formErrorMessage.textContent = '';
-        productModal.style.display = 'flex';
-    });
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
 
-    // Open Edit Product Modal
-    function openProductModalForEdit(product) {
-        productForm.reset(); // Clear form
-        modalTitle.textContent = 'تعديل المنتج';
-        productIdInput.value = product.id;
-        tradeNameInput.value = product.tradeName || '';
-        scientificNameInput.value = product.scientificName || '';
-        concentrationInput.value = product.concentration || '';
-        pharmaceuticalFormInput.value = product.pharmaceuticalForm || '';
-        quantityInput.value = product.quantity !== undefined ? product.quantity : '';
-        purchasePriceInput.value = product.purchasePrice !== undefined ? product.purchasePrice : '';
-        salePriceInput.value = product.salePrice !== undefined ? product.salePrice : '';
-        unitTypeInput.value = product.unitType || 'علبة';
-        subUnitsInput.value = product.subUnits !== undefined ? product.subUnits : 1;
-        subSubUnitsInput.value = product.subSubUnits !== undefined ? product.subSubUnits : 1;
-        productionDateInput.value = product.productionDate || '';
-        expiryDateInput.value = product.expiryDate || '';
-        barcodeInput.value = product.barcode || '';
-        supplierInput.value = product.supplier || '';
-        minStockInput.value = product.minStock !== undefined ? product.minStock : 10;
-        
-        // Show current image if available
-        if (product.imageUrl) {
-            currentProductImage.src = product.imageUrl;
-            currentProductImage.style.display = 'block';
-        } else {
-            currentProductImage.style.display = 'none';
+    if (productId) {
+        formPageTitle.textContent = 'تعديل المنتج';
+        loadProductForEdit(productId);
+    } else {
+        formPageTitle.textContent = 'إضافة منتج جديد';
+    }
+
+    // Form Submission
+    if (productForm) {
+        productForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            formErrorMessage.textContent = '';
+
+            const id = productIdInput.value;
+            const tradeName = tradeNameInput.value.trim();
+            const scientificName = scientificNameInput.value.trim();
+            const concentration = concentrationInput.value.trim();
+            const pharmaceuticalForm = pharmaceuticalFormInput.value.trim();
+            const quantity = parseFloat(quantityInput.value);
+            const purchasePrice = parseFloat(purchasePriceInput.value);
+            const salePrice = parseFloat(salePriceInput.value);
+            const unitType = unitTypeInput.value;
+            const subUnits = parseInt(subUnitsInput.value) || 1;
+            const subSubUnits = parseInt(subSubUnitsInput.value) || 1;
+            const productionDate = productionDateInput.value;
+            const expiryDate = expiryDateInput.value;
+            const barcode = barcodeInput.value.trim();
+            const supplier = supplierInput.value.trim();
+            const minStock = parseFloat(minStockInput.value);
+
+            if (!tradeName || isNaN(quantity) || isNaN(purchasePrice) || isNaN(salePrice) || isNaN(minStock)) {
+                formErrorMessage.textContent = 'الاسم التجاري، الكمية، سعر الشراء، سعر البيع، وحد أدنى للمخزون هي حقول مطلوبة ويجب أن تكون أرقامًا صحيحة.';
+                showCustomAlert('يرجى ملء جميع الحقول المطلوبة بشكل صحيح.', 'error');
+                return;
+            }
+            if (subUnits < 1 || subSubUnits < 1) {
+                formErrorMessage.textContent = 'يجب أن تكون الوحدات الفرعية أكبر من أو تساوي 1.';
+                showCustomAlert('يجب أن تكون الوحدات الفرعية أكبر من أو تساوي 1.', 'error');
+                return;
+            }
+            if (expiryDate && new Date(expiryDate) < new Date()) {
+                formErrorMessage.textContent = 'تاريخ الانتهاء لا يمكن أن يكون في الماضي.';
+                showCustomAlert('تاريخ الانتهاء لا يمكن أن يكون في الماضي.', 'error');
+                return;
+            }
+
+            try {
+                const productData = {
+                    tradeName,
+                    scientificName,
+                    concentration,
+                    pharmaceuticalForm,
+                    quantity,
+                    purchasePrice,
+                    salePrice,
+                    unitType,
+                    subUnits,
+                    subSubUnits,
+                    productionDate,
+                    expiryDate,
+                    barcode,
+                    supplier,
+                    minStock,
+                    lastUpdated: new Date().toISOString()
+                };
+
+                if (id) {
+                    await updateDoc(doc(db, 'products', id), productData);
+                    showCustomAlert("تم تحديث المنتج بنجاح!", 'success');
+                } else {
+                    await addDoc(collection(db, 'products'), productData);
+                    showCustomAlert("تم إضافة المنتج بنجاح!", 'success');
+                    productForm.reset(); // Clear form for new entry
+                    generatedBarcodeSvg.innerHTML = '';
+                    productIdInput.value = ''; // Ensure ID is clear for next add
+                }
+                // Optional: Redirect back to dashboard after successful save
+                // setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+
+            } catch (error) {
+                console.error("Error saving product:", error);
+                formErrorMessage.textContent = 'حدث خطأ أثناء حفظ المنتج: ' + error.message;
+                showCustomAlert('حدث خطأ أثناء حفظ المنتج.', 'error');
+            }
+        });
+    }
+
+    // Load product data for editing
+    async function loadProductForEdit(id) {
+        try {
+            const productDoc = await getDoc(doc(db, 'products', id));
+            if (productDoc.exists()) {
+                const product = productDoc.data();
+                productIdInput.value = productDoc.id;
+                tradeNameInput.value = product.tradeName || '';
+                scientificNameInput.value = product.scientificName || '';
+                concentrationInput.value = product.concentration || '';
+                pharmaceuticalFormInput.value = product.pharmaceuticalForm || '';
+                quantityInput.value = product.quantity !== undefined ? product.quantity : '';
+                purchasePriceInput.value = product.purchasePrice !== undefined ? product.purchasePrice : '';
+                salePriceInput.value = product.salePrice !== undefined ? product.salePrice : '';
+                unitTypeInput.value = product.unitType || 'علبة';
+                subUnitsInput.value = product.subUnits !== undefined ? product.subUnits : 1;
+                subSubUnitsInput.value = product.subSubUnits !== undefined ? product.subSubUnits : 1;
+                productionDateInput.value = product.productionDate || '';
+                expiryDateInput.value = product.expiryDate || '';
+                barcodeInput.value = product.barcode || '';
+                supplierInput.value = product.supplier || '';
+                minStockInput.value = product.minStock !== undefined ? product.minStock : 10;
+
+                if (product.barcode) {
+                    JsBarcode("#generatedBarcode", product.barcode, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 50,
+                        displayValue: true
+                    });
+                }
+            } else {
+                showCustomAlert("المنتج غير موجود.", 'error');
+                // Optional: Redirect to add new product if not found
+                // setTimeout(() => { window.location.href = 'product-form.html'; }, 1500);
+            }
+        } catch (error) {
+            console.error("Error loading product for edit:", error);
+            showCustomAlert('حدث خطأ أثناء تحميل بيانات المنتج.', 'error');
         }
+    }
 
-        // Generate barcode SVG if barcode exists
-        generatedBarcodeSvg.innerHTML = '';
-        if (product.barcode) {
-            JsBarcode("#generatedBarcode", product.barcode, {
+    // Barcode Scan for Product Form
+    if (scanBarcodeBtn) {
+        scanBarcodeBtn.addEventListener('click', () => {
+            scannerResults.textContent = 'جاري البحث عن باركود...';
+            scannerModal.style.display = 'flex';
+            initBarcodeScanner(false); // Pass false to indicate it's for form input
+        });
+    }
+
+    // Barcode Generation for Product Form
+    if (generateBarcodeBtn) {
+        generateBarcodeBtn.addEventListener('click', () => {
+            const value = barcodeInput.value.trim() || `PHARM${Date.now()}`;
+            barcodeInput.value = value;
+            generatedBarcodeSvg.innerHTML = '';
+            JsBarcode("#generatedBarcode", value, {
                 format: "CODE128",
                 width: 2,
                 height: 50,
                 displayValue: true
             });
-        }
-        formErrorMessage.textContent = '';
-        productModal.style.display = 'flex';
-    }
-
-    // Close all modals
-    closeButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            productModal.style.display = 'none';
-            scannerModal.style.display = 'none';
-            printBarcodeModal.style.display = 'none';
-            // Stop scanner if running
-            if (window.Quagga && Quagga.initialized) { // Check if Quagga is loaded and initialized
-                Quagga.stop();
-                interactiveViewport.innerHTML = ''; // Clear video feed
-                scannerResults.textContent = '';
-            }
         });
-    });
+    }
+}
 
-    // Close modal if clicked outside
-    window.addEventListener('click', (event) => {
-        if (event.target === productModal) {
-            productModal.style.display = 'none';
-        }
-        if (event.target === scannerModal) {
-            scannerModal.style.display = 'none';
-            if (window.Quagga && Quagga.initialized) {
-                Quagga.stop();
-                interactiveViewport.innerHTML = '';
-                scannerResults.textContent = '';
-            }
-        }
-        if (event.target === printBarcodeModal) {
-            printBarcodeModal.style.display = 'none';
-        }
-    });
+// --- Common Modal & Barcode Scanner Logic ---
 
-    // --- Add/Edit Product Form Submission ---
-    productForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        formErrorMessage.textContent = '';
+// Close all modals (shared function)
+document.querySelectorAll('.close-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        if (scannerModal) scannerModal.style.display = 'none';
+        if (printBarcodeModal) printBarcodeModal.style.display = 'none';
+        // Note: productModal is now product-form.html, so it's a page navigation
+        // If you had other modals (e.g., confirmation modals), they'd be handled here.
 
-        const id = productIdInput.value;
-        const tradeName = tradeNameInput.value.trim();
-        const scientificName = scientificNameInput.value.trim();
-        const concentration = concentrationInput.value.trim();
-        const pharmaceuticalForm = pharmaceuticalFormInput.value.trim();
-        const quantity = parseFloat(quantityInput.value);
-        const purchasePrice = parseFloat(purchasePriceInput.value);
-        const salePrice = parseFloat(salePriceInput.value);
-        const unitType = unitTypeInput.value;
-        const subUnits = parseInt(subUnitsInput.value) || 1; // Default to 1 if not set
-        const subSubUnits = parseInt(subSubUnitsInput.value) || 1; // Default to 1 if not set
-        const productionDate = productionDateInput.value;
-        const expiryDate = expiryDateInput.value;
-        const barcode = barcodeInput.value.trim();
-        const supplier = supplierInput.value.trim();
-        const minStock = parseFloat(minStockInput.value);
-        const productImageFile = productImageInput.files[0];
-
-        if (!tradeName || isNaN(quantity) || isNaN(purchasePrice) || isNaN(salePrice) || isNaN(minStock)) {
-            formErrorMessage.textContent = 'الاسم التجاري، الكمية، سعر الشراء، سعر البيع، وحد أدنى للمخزون هي حقول مطلوبة ويجب أن تكون أرقامًا صحيحة.';
-            return;
-        }
-        if (subUnits < 1 || subSubUnits < 1) {
-            formErrorMessage.textContent = 'يجب أن تكون الوحدات الفرعية أكبر من أو تساوي 1.';
-            return;
-        }
-        if (expiryDate && new Date(expiryDate) < new Date()) {
-            formErrorMessage.textContent = 'تاريخ الانتهاء لا يمكن أن يكون في الماضي.';
-            return;
-        }
-
-        let imageUrl = currentProductImage.src === '' ? null : currentProductImage.src; // Keep existing image
-        let imagePath = productIdInput.value ? (allProductsData.find(p => p.id === productIdInput.value)?.imagePath || null) : null;
-
-
-        try {
-            if (productImageFile) {
-                // If a new image is uploaded, delete the old one if it exists
-                if (imagePath) {
-                    const oldImageRef = ref(storage, imagePath);
-                    await deleteObject(oldImageRef).catch(e => console.warn("Could not delete old image:", e.message));
-                }
-                const storageRef = ref(storage, `product_images/${Date.now()}_${productImageFile.name}`);
-                const snapshot = await uploadBytes(storageRef, productImageFile);
-                imageUrl = await getDownloadURL(snapshot.ref);
-                imagePath = snapshot.metadata.fullPath; // Store full path for deletion later
-                console.log("Image uploaded:", imageUrl);
-            } else if (currentProductImage.style.display === 'none' && imagePath) {
-                // If image was removed (preview hidden) and there was an old image, delete it
-                const oldImageRef = ref(storage, imagePath);
-                await deleteObject(oldImageRef).catch(e => console.warn("Could not delete old image:", e.message));
-                imageUrl = null;
-                imagePath = null;
-            }
-
-
-            const productData = {
-                tradeName,
-                scientificName,
-                concentration,
-                pharmaceuticalForm,
-                quantity,
-                purchasePrice,
-                salePrice,
-                unitType,
-                subUnits,
-                subSubUnits,
-                productionDate,
-                expiryDate,
-                barcode,
-                supplier,
-                minStock,
-                imageUrl,
-                imagePath, // Save path for deletion
-                lastUpdated: new Date().toISOString()
-            };
-
-            if (id) {
-                // Update existing product
-                await updateDoc(doc(db, 'products', id), productData);
-                alert("تم تحديث المنتج بنجاح!");
-            } else {
-                // Add new product
-                await addDoc(collection(db, 'products'), productData);
-                alert("تم إضافة المنتج بنجاح!");
-            }
-
-            productModal.style.display = 'none';
-            loadProducts(); // Reload products to update table
-        } catch (error) {
-            console.error("Error saving product:", error);
-            formErrorMessage.textContent = 'حدث خطأ أثناء حفظ المنتج: ' + error.message;
+        // Stop scanner if running
+        if (window.Quagga && Quagga.initialized) {
+            Quagga.stop();
+            if (interactiveViewport) interactiveViewport.innerHTML = '';
+            if (scannerResults) scannerResults.textContent = '';
         }
     });
+});
 
-    // --- Search and Filter Event Listeners ---
-    searchInput.addEventListener('input', applySearchAndFilter);
-    filterCategory.addEventListener('change', applySearchAndFilter);
-
-    // --- Barcode Scanner Logic (QuaggaJS) ---
-    scanBarcodeBtn.addEventListener('click', () => {
-        scannerResults.textContent = 'جاري البحث عن باركود...';
-        scannerModal.style.display = 'flex';
-        initBarcodeScanner();
-    });
-
-    closeScannerBtn.addEventListener('click', () => {
+// Close modal if clicked outside (shared function)
+window.addEventListener('click', (event) => {
+    if (scannerModal && event.target === scannerModal) {
         scannerModal.style.display = 'none';
         if (window.Quagga && Quagga.initialized) {
             Quagga.stop();
-            interactiveViewport.innerHTML = ''; // Clear video feed
-            scannerResults.textContent = '';
+            if (interactiveViewport) interactiveViewport.innerHTML = '';
+            if (scannerResults) scannerResults.textContent = '';
         }
-    });
+    }
+    if (printBarcodeModal && event.target === printBarcodeModal) {
+        printBarcodeModal.style.display = 'none';
+    }
+});
 
-    function initBarcodeScanner() {
-        if (window.Quagga && Quagga.initialized) {
-            Quagga.stop(); // Ensure previous instance is stopped
-        }
-
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: interactiveViewport,
-                constraints: {
-                    width: 640,
-                    height: 480,
-                    facingMode: "environment" // Use rear camera on mobile
-                },
-            },
-            decoder: {
-                readers: ["ean_reader", "code_128_reader", "code_39_reader"] // Specify common barcode types
-            }
-        }, function (err) {
-            if (err) {
-                console.error("Error initializing Quagga:", err);
-                scannerResults.textContent = 'خطأ في تهيئة الماسح الضوئي: ' + err.message;
-                return;
-            }
-            console.log("Quagga initialization finished. Ready to start.");
-            Quagga.start();
-        });
-
-        Quagga.onDetected(function (data) {
-            const code = data.codeResult.code;
-            console.log("Barcode detected and processed:", code);
-            scannerResults.textContent = `تم العثور على الباركود: ${code}`;
-            barcodeInput.value = code; // Put scanned barcode into the input field
-            // Stop scanning after successful detection
-            if (window.Quagga) { // Ensure Quagga is still loaded
-                Quagga.stop();
-                interactiveViewport.innerHTML = ''; // Clear video feed
-            }
-            scannerModal.style.display = 'none';
-        });
-
-        // Optional: Draw scan lines for better feedback
-        Quagga.onProcessed(function (result) {
-            var drawingCtx = Quagga.canvas.ctx.overlay,
-                drawingCanvas = Quagga.canvas.dom.overlay;
-
-            if (result) {
-                if (result.boxes) {
-                    drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.width), parseInt(drawingCanvas.height));
-                    result.boxes.filter(function (box) {
-                        return box !== result.box;
-                    }).forEach(function (box) {
-                        Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 2 });
-                    });
-                }
-
-                if (result.box) {
-                    Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "#00F", lineWidth: 2 });
-                }
-
-                if (result.codeResult && result.codeResult.code) {
-                    Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, drawingCtx, { color: "red", lineWidth: 3 });
-                }
-            }
-        });
+// Initialize Barcode Scanner (QuaggaJS) - shared function
+let isScannerInitialized = false;
+function initBarcodeScanner(isSearchMode = false) {
+    if (isScannerInitialized) { // Ensure only one instance is running
+        Quagga.stop();
+        isScannerInitialized = false;
     }
 
-    // --- Barcode Generation (JsBarcode) ---
-    generateBarcodeBtn.addEventListener('click', () => {
-        const value = barcodeInput.value.trim() || `PHARM${Date.now()}`; // Default if empty
-        barcodeInput.value = value; // Update input with generated value
-        
-        generatedBarcodeSvg.innerHTML = ''; // Clear previous SVG
-        JsBarcode("#generatedBarcode", value, {
-            format: "CODE128", // Or other formats like EAN13
-            width: 2,
-            height: 50,
-            displayValue: true
-        });
-    });
+    if (!interactiveViewport) {
+        console.error("Interactive viewport not found for scanner.");
+        showCustomAlert('خطأ: عنصر عرض الكاميرا غير موجود.', 'error');
+        return;
+    }
 
-    // --- Print Barcode Functionality ---
-    function openPrintBarcodeModal(barcodeValue, productName) {
-        if (!barcodeValue) {
-            alert("لا يوجد باركود لطباعته لهذا المنتج.");
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: interactiveViewport,
+            constraints: {
+                width: 640,
+                height: 480,
+                facingMode: "environment" // Use rear camera
+            },
+        },
+        decoder: {
+            readers: ["ean_reader", "code_128_reader", "code_39_reader"]
+        }
+    }, function (err) {
+        if (err) {
+            console.error("Error initializing Quagga:", err);
+            scannerResults.textContent = 'خطأ في تهيئة الماسح الضوئي: ' + err.message;
+            showCustomAlert('خطأ في تشغيل الماسح الضوئي.', 'error');
             return;
         }
-        barcodeToPrintDiv.innerHTML = `
-            <p>${productName || ''}</p>
-            <svg id="printSvgBarcode"></svg>
-            <p>${barcodeValue}</p>
-        `;
-        JsBarcode("#printSvgBarcode", barcodeValue, {
-            format: "CODE128",
-            width: 2,
-            height: 60,
-            displayValue: true,
-            fontSize: 18,
-            textMargin: 0
-        });
-        printBarcodeModal.style.display = 'flex';
-    }
-
-    // Function to handle actual print action for a specific div
-    window.printDiv = function(divId) {
-        var printContents = document.getElementById(divId).innerHTML;
-        var originalContents = document.body.innerHTML;
-        document.body.innerHTML = printContents;
-        window.print();
-        document.body.innerHTML = originalContents;
-        // Reload page to restore event listeners and app state if needed
-        window.location.reload(); 
-    }
-
-    // --- Bottom Navigation (Placeholder for now) ---
-    const bottomNavItems = document.querySelectorAll('.nav-item-bottom');
-    bottomNavItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Remove active from all
-            bottomNavItems.forEach(i => i.classList.remove('active'));
-            // Add active to clicked
-            item.classList.add('active');
-
-            const section = item.dataset.section;
-            alert(`سيتم عرض قسم: ${section}\n(هذه الأقسام قيد التطوير)`);
-            // In a real app, you would hide/show different content sections
-            // For now, it's just an alert.
-            // Example: if (section === 'products') { showProductsSection(); }
-        });
+        console.log("Quagga initialization finished. Ready to start.");
+        Quagga.start();
+        isScannerInitialized = true;
     });
 
+    Quagga.onDetected(function (data) {
+        const code = data.codeResult.code;
+        console.log("Barcode detected:", code);
+        scannerResults.textContent = `تم العثور على الباركود: ${code}`;
+        
+        if (isSearchMode) {
+            if (searchInput) {
+                searchInput.value = code;
+                applySearchAndFilter(); // Trigger search immediately
+            }
+        } else {
+            if (barcodeInput) {
+                barcodeInput.value = code;
+                if (generatedBarcodeSvg) { // Generate SVG for form
+                    generatedBarcodeSvg.innerHTML = '';
+                    JsBarcode("#generatedBarcode", code, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 50,
+                        displayValue: true
+                    });
+                }
+            }
+        }
+        
+        if (window.Quagga) {
+            Quagga.stop();
+            isScannerInitialized = false;
+            interactiveViewport.innerHTML = '';
+        }
+        if (scannerModal) scannerModal.style.display = 'none';
+        showCustomAlert(`تم مسح الباركود بنجاح: ${code}`, 'success');
+    });
+
+    // Drawing debug lines (optional, but good for feedback)
+    Quagga.onProcessed(function (result) {
+        var drawingCtx = Quagga.canvas.ctx.overlay,
+            drawingCanvas = Quagga.canvas.dom.overlay;
+
+        if (result) {
+            if (result.boxes) {
+                drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.width), parseInt(drawingCanvas.height));
+                result.boxes.filter(function (box) {
+                    return box !== result.box;
+                }).forEach(function (box) {
+                    Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 2 });
+                });
+            }
+
+            if (result.box) {
+                Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "#00F", lineWidth: 2 });
+            }
+
+            if (result.codeResult && result.codeResult.code) {
+                Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, drawingCtx, { color: "red", lineWidth: 3 });
+            }
+        }
+    });
 }
+
+// --- Print Barcode Functionality (shared function) ---
+function openPrintBarcodeModal(barcodeValue, productName) {
+    if (!barcodeValue) {
+        showCustomAlert("لا يوجد باركود لطباعته لهذا المنتج.", 'error');
+        return;
+    }
+    if (barcodeToPrintDiv) {
+        barcodeToPrintDiv.innerHTML = `
+            <p>${productName || 'منتج صيدلية'}</p>
+            <svg id="printSvgBarcode"></svg>
+            <p class="barcode-text">${barcodeValue}</p>
+        `;
+        // Ensure JsBarcode is available globally or imported
+        if (window.JsBarcode) {
+            JsBarcode("#printSvgBarcode", barcodeValue, {
+                format: "CODE128",
+                width: 2,
+                height: 60,
+                displayValue: true,
+                fontSize: 18,
+                textMargin: 0
+            });
+        } else {
+            console.error("JsBarcode library not loaded.");
+            showCustomAlert("خطأ: مكتبة الباركود غير محملة.", 'error');
+            return;
+        }
+    }
+    if (printBarcodeModal) {
+        printBarcodeModal.style.display = 'flex';
+    }
+}
+
+// Function to handle actual print action for a specific div
+window.printDiv = function(divId) {
+    var printContents = document.getElementById(divId);
+    if (!printContents) {
+        showCustomAlert("خطأ في الطباعة: العنصر غير موجود.", 'error');
+        return;
+    }
+    
+    // Create a new window for printing
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write('<html><head><title>طباعة الباركود</title>');
+    // Copy necessary CSS for printing
+    printWindow.document.write('<link rel="stylesheet" href="style.css">');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<div style="font-family: \'Cairo\', sans-serif; text-align: center;">');
+    printWindow.document.write(printContents.innerHTML);
+    printWindow.document.write('</div></body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+
+    // Give some time for content to render, then print
+    printWindow.onload = function() {
+        printWindow.print();
+        printWindow.close();
+        showCustomAlert("تم إرسال الباركود للطباعة.", 'success');
+    };
+    
+    // After printing, ensure original modal is closed and state is clean
+    if (printBarcodeModal) printBarcodeModal.style.display = 'none';
+};
