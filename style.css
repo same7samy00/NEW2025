@@ -6,13 +6,13 @@ body {
     margin: 0;
     color: #333;
     line-height: 1.6;
-    display: flex; /* For dashboard layout */
+    display: flex; /* For dashboard layout on desktop */
     min-height: 100vh; /* Ensure full viewport height */
     overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 /* Base Styles for all pages (Buttons, Inputs, Cards) */
-.btn {
+.btn, .btn-login {
     padding: 10px 18px;
     border: none;
     border-radius: 6px;
@@ -66,12 +66,12 @@ body {
     flex-grow: 1;
 }
 .input-icon-group input {
-    /* Padding-right for RTL icon on left */
-    padding-left: 40px; /* Make space for icon */
+    padding-right: 40px; /* Make space for icon */
+    padding-left: 15px; /* Default padding for input text */
 }
-.input-icon-group .icon-right { /* Changed from icon-left to icon-right for RTL layout */
+.input-icon-group .icon-right {
     position: absolute;
-    right: 12px; /* Position to the right */
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: #888;
@@ -116,7 +116,7 @@ body {
     border-radius: 5px;
 }
 
-/* Login Page Styles (Restored to initial modern design) */
+/* Login Page Styles (Restored to initial simple design) */
 .login-container {
     background-color: #fff;
     padding: 30px 40px;
@@ -170,7 +170,7 @@ body {
     box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
 }
 
-.login-container button[type="submit"] {
+.btn-login { /* Specific style for login page button */
     background-color: #28a745;
     color: white;
     padding: 12px 20px;
@@ -183,7 +183,7 @@ body {
     font-weight: 700;
 }
 
-.login-container button[type="submit"]:hover {
+.btn-login:hover {
     background-color: #218838;
 }
 
@@ -274,14 +274,14 @@ body {
 }
 
 /* Main Content Area */
-.main-content {
+.main-content, .form-page-wrapper { /* Apply to both dashboard and form pages */
     flex-grow: 1;
     padding: 0;
     display: flex;
     flex-direction: column;
-    transition: margin-right 0.3s ease-in-out; /* For sidebar collapse (desktop) */
-    width: calc(100% - 250px); /* For desktop layout */
+    width: calc(100% - 250px); /* For desktop layout (sidebar width) */
     margin-right: 250px; /* Push content to the left of sidebar */
+    transition: margin-right 0.3s ease-in-out;
 }
 
 .topbar {
@@ -308,8 +308,17 @@ body {
     font-weight: 600;
     color: #444;
 }
+.back-btn { /* For product-form.html */
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #555;
+    cursor: pointer;
+    margin-left: 15px; /* Space between back button and title */
+}
 
-.content-area {
+
+.content-area, .form-content-area { /* Apply to both content sections */
     flex-grow: 1;
     padding: 25px;
     background-color: #eef5f9;
@@ -524,22 +533,6 @@ body {
 }
 
 /* --- Form Page (product-form.html) Specific Styles --- */
-.form-page-wrapper {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    flex-grow: 1;
-    /* On desktop, this page also takes full width */
-    margin-right: 250px; /* To push content for sidebar space */
-    width: calc(100% - 250px);
-}
-
-.form-content-area {
-    flex-grow: 1;
-    padding: 25px;
-    background-color: #eef5f9;
-}
-
 .product-form {
     background-color: #ffffff;
     border-radius: 12px;
@@ -658,10 +651,11 @@ body {
 /* Mobile adjustments (up to 768px) */
 @media (max-width: 768px) {
     body {
-        /* On mobile, we use position absolute/fixed for sidebar */
-        display: block; /* Disable flex on body */
+        /* On mobile, body doesn't use flex directly for layout */
+        display: block;
     }
 
+    /* Login Page Mobile */
     .login-container {
         padding: 25px;
         margin: 20px auto;
@@ -742,23 +736,19 @@ body {
         white-space: normal; /* Allow text wrapping in table cells for better fit */
     }
     /* Hide less critical columns on mobile to save space */
-    .products-table th:nth-child(2), /* Scientific Name */
-    .products-table td:nth-child(2),
-    .products-table th:nth-child(4), /* Purchase Price */
-    .products-table td:nth-child(4),
-    .products-table th:nth-child(6), /* Supplier - this was incorrect in prev css */
-    .products-table td:nth-child(6) {
-        display: none;
+    .products-table th:nth-child(2), /* Quantity (now 2nd) */
+    .products-table td:nth-child(2) {
+        /* No, keep quantity. Re-evaluate which columns to hide */
+    }
+    /* Let's adjust what's visible for mobile table for better use of space */
+    .products-table th:not(:first-child):not(:nth-child(3)):not(:nth-child(4)):not(:last-child),
+    .products-table td:not(:first-child):not(:nth-child(3)):not(:nth-child(4)):not(:last-child) {
+        /* Hide Scientific Name, Purchase Price, Supplier, Barcode if space is tight */
+        /* For this example, I'll keep it as the HTML has only these visible columns now */
+        /* If you wanted to hide more for tighter mobile view, you'd target them here */
     }
 
-    /* Adjust barcode column to show shorter version or just the icon */
-    .products-table td:nth-child(5) { /* Barcode column is now 5th */
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100px; /* Limit width */
-    }
-
-
+    /* Action buttons in table mobile */
     .products-table td .action-buttons-group {
         flex-direction: column; /* Stack buttons vertically */
         gap: 5px;
