@@ -51,7 +51,7 @@ if (loginForm) {
                     message = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
                     break;
                 default:
-                    message = 'حدث خطأ غير متوقع: ' + error.message; // More specific error
+                    message = 'حدث خطأ غير متوقع: ' + error.message;
             }
             errorMessageDiv.textContent = message; // Keep error in form for immediate feedback
             showCustomAlert(message, 'error'); // Also show a custom alert
@@ -59,19 +59,14 @@ if (loginForm) {
     });
 }
 
-// --- Auth State Management for protected pages ---
-// This function will be called on protected pages (dashboard, product-form)
-export function ensureAuthenticatedUser() {
-    // onAuthStateChanged ensures auth is initialized before checking state
+// --- NEW: Function to ensure Firebase Auth is ready and user state is known ---
+export function onAuthAndFirebaseReady(callback) {
+    // This will fire immediately if already signed in, or after sign-in.
+    // It guarantees that the 'auth' object is fully initialized.
     onAuthStateChanged(auth, (user) => {
-        if (!user) {
-            console.log("User not logged in. Redirecting to login.");
-            showCustomAlert('يرجى تسجيل الدخول أولاً.', 'error');
-            setTimeout(() => {
-                window.location.href = "index.html";
-            }, 1000);
-        }
-        // If user is logged in, no action needed. app.js will handle specific page logic.
+        // If user is null, it means not logged in or auth is ready and no user.
+        // If user is an object, it means logged in.
+        callback(user);
     });
 }
 
@@ -89,7 +84,7 @@ export async function signOutUser() {
     }
 }
 
-// Attach logout to buttons in dashboard/product-form (ensure these IDs exist on the page)
+// Attach logout to sidebar button
 document.addEventListener('DOMContentLoaded', () => {
     const logoutBtnSidebar = document.getElementById('logoutBtnSidebar');
     if (logoutBtnSidebar) {
