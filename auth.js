@@ -50,6 +50,8 @@ if (loginForm) {
                 case 'auth/wrong-password':
                     message = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
                     break;
+                default:
+                    message = 'حدث خطأ غير متوقع: ' + error.message; // More specific error
             }
             errorMessageDiv.textContent = message; // Keep error in form for immediate feedback
             showCustomAlert(message, 'error'); // Also show a custom alert
@@ -59,7 +61,7 @@ if (loginForm) {
 
 // --- Auth State Management for protected pages ---
 // This function will be called on protected pages (dashboard, product-form)
-export function checkAuthStateAndRedirect() {
+export function ensureAuthenticatedUser() {
     // onAuthStateChanged ensures auth is initialized before checking state
     onAuthStateChanged(auth, (user) => {
         if (!user) {
@@ -90,12 +92,7 @@ export async function signOutUser() {
 // Attach logout to buttons in dashboard/product-form (ensure these IDs exist on the page)
 document.addEventListener('DOMContentLoaded', () => {
     const logoutBtnSidebar = document.getElementById('logoutBtnSidebar');
-    // const logoutBtnTop = document.getElementById('logoutBtnTop'); // Removed as per new design
-
     if (logoutBtnSidebar) {
         logoutBtnSidebar.addEventListener('click', signOutUser);
     }
-    // if (logoutBtnTop) { // This button is removed in current HTML
-    //     logoutBtnTop.addEventListener('click', signOutUser);
-    // }
 });
