@@ -11,137 +11,79 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <header class="navbar-top">
-        <div class="navbar-brand">نظام إدارة الصيدلية</div>
-        <nav class="nav-links-top">
-            <a href="#" class="nav-item active">إدارة المنتجات</a>
-            <a href="#" class="nav-item">الموردون</a>
-            <a href="#" class="nav-item">التقارير</a>
-            <a href="#" class="nav-item" id="logoutBtnTop">تسجيل الخروج</a>
-        </nav>
-    </header>
+    <div id="app-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">لوحة التحكم</span>
+                <button class="close-sidebar-btn" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item active">
+                    <i class="fas fa-boxes"></i>
+                    <span>إدارة المنتجات</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-truck-moving"></i>
+                    <span>الموردون</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>التقارير</span>
+                </a>
+                <a href="#" class="nav-item" id="logoutBtnSidebar">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>تسجيل الخروج</span>
+                </a>
+            </nav>
+        </aside>
 
-    <div class="container">
-        <h1>إدارة المنتجات</h1>
+        <main class="main-content" id="mainContent">
+            <header class="topbar">
+                <button class="menu-toggle-btn" id="menuToggleBtn"><i class="fas fa-bars"></i></button>
+                <div class="topbar-title">إدارة المنتجات</div>
+                <div class="topbar-actions">
+                    </div>
+            </header>
 
-        <div class="controls-section">
-            <input type="text" id="searchInput" placeholder="ابحث بالاسم التجاري، العلمي، الباركود..." class="search-input">
-            <select id="filterCategory" class="filter-select">
-                <option value="">كل المنتجات</option>
-                <option value="قريب من الانتهاء">قريب من الانتهاء</option>
-                <option value="منتهي الصلاحية">منتهي الصلاحية</option>
-                <option value="منخفض المخزون">منخفض المخزون</option>
-            </select>
-            <button id="addProductBtn" class="add-button"><i class="fas fa-plus"></i> إضافة منتج جديد</button>
-        </div>
-
-        <div class="products-table-container">
-            <table class="products-table">
-                <thead>
-                    <tr>
-                        <th>صورة</th>
-                        <th>الاسم التجاري</th>
-                        <th>الكمية</th>
-                        <th>سعر البيع</th>
-                        <th>تاريخ الانتهاء</th>
-                        <th>الباركود</th>
-                        <th>إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody id="productsTableBody">
-                    </tbody>
-            </table>
-            <p id="noProductsMessage" class="no-data-message" style="display: none;">لا توجد منتجات لعرضها.</p>
-            <div id="loadingSpinner" class="loading-spinner"></div>
-        </div>
-    </div>
-
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2 id="modalTitle">إضافة منتج جديد</h2>
-            <form id="productForm">
-                <input type="hidden" id="productId"> <div class="form-grid">
-                    <div class="form-group">
-                        <label for="tradeName">الاسم التجاري:</label>
-                        <input type="text" id="tradeName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="scientificName">الاسم العلمي:</label>
-                        <input type="text" id="scientificName">
-                    </div>
-                    <div class="form-group">
-                        <label for="concentration">التركيز:</label>
-                        <input type="text" id="concentration">
-                    </div>
-                    <div class="form-group">
-                        <label for="pharmaceuticalForm">الشكل الصيدلي:</label>
-                        <input type="text" id="pharmaceuticalForm">
-                    </div>
-                    <div class="form-group">
-                        <label for="quantity">الكمية الإجمالية (علبة):</label>
-                        <input type="number" id="quantity" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="purchasePrice">سعر الشراء (للعُلبة):</label>
-                        <input type="number" id="purchasePrice" step="0.01" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="salePrice">سعر البيع (للعُلبة):</label>
-                        <input type="number" id="salePrice" step="0.01" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="unitType">وحدة البيع الرئيسية:</label>
-                        <select id="unitType" required>
-                            <option value="علبة">علبة</option>
-                            <option value="عبوة">عبوة</option>
-                            <option value="قطعة">قطعة</option>
-                            <option value="زجاجة">زجاجة</option>
-                            </select>
-                    </div>
-                     <div class="form-group">
-                        <label for="subUnits">عدد الوحدات الفرعية لكل وحدة رئيسية (مثل: 10 أشرطة في علبة):</label>
-                        <input type="number" id="subUnits" min="1" value="1" placeholder="مثال: 10 (إذا كانت العلبة بها 10 أشرطة)">
-                    </div>
-                    <div class="form-group">
-                        <label for="subSubUnits">عدد الوحدات الفرعية الفرعية (مثل: 10 حبات في شريط):</label>
-                        <input type="number" id="subSubUnits" min="1" value="1" placeholder="مثال: 10 (إذا كان الشريط به 10 حبات)">
-                    </div>
-                    <div class="form-group">
-                        <label for="productionDate">تاريخ الإنتاج:</label>
-                        <input type="date" id="productionDate">
-                    </div>
-                    <div class="form-group">
-                        <label for="expiryDate">تاريخ الانتهاء:</label>
-                        <input type="date" id="expiryDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="barcodeInput">الباركود:</label>
-                        <div class="barcode-input-group">
-                            <input type="text" id="barcodeInput" placeholder="مسح أو إدخال باركود">
-                            <button type="button" id="scanBarcodeBtn" class="icon-button" title="مسح باركود"><i class="fas fa-barcode"></i></button>
-                            <button type="button" id="generateBarcodeBtn" class="icon-button" title="توليد باركود"><i class="fas fa-magic"></i></button>
+            <div class="content-area">
+                <div class="card controls-section">
+                    <div class="search-filter-group">
+                        <div class="input-icon-group">
+                            <input type="text" id="searchInput" placeholder="ابحث بالاسم التجاري، العلمي، الباركود...">
+                            <i class="fas fa-search icon-left"></i>
                         </div>
-                        <svg id="generatedBarcode" class="generated-barcode"></svg>
+                        <select id="filterCategory" class="form-select">
+                            <option value="">كل المنتجات</option>
+                            <option value="قريب من الانتهاء">قريب من الانتهاء</option>
+                            <option value="منتهي الصلاحية">منتهي الصلاحية</option>
+                            <option value="منخفض المخزون">منخفض المخزون</option>
+                        </select>
+                         <button id="scanSearchBarcodeBtn" class="btn btn-secondary"><i class="fas fa-barcode"></i> مسح للبحث</button>
                     </div>
-                    <div class="form-group">
-                        <label for="supplier">المورد:</label>
-                        <input type="text" id="supplier">
-                    </div>
-                    <div class="form-group">
-                        <label for="minStock">حد أدنى للمخزون (للتنبيه):</label>
-                        <input type="number" id="minStock" min="0" value="10">
-                    </div>
-                    <div class="form-group">
-                        <label for="productImage">صورة المنتج / النشرة:</label>
-                        <input type="file" id="productImage" accept="image/*,.pdf">
-                        <img id="currentProductImage" src="" alt="صورة المنتج" style="max-width: 100px; max-height: 100px; margin-top: 10px; display: none;">
-                    </div>
+                    <button id="addProductBtn" class="btn btn-primary"><i class="fas fa-plus"></i> إضافة منتج جديد</button>
                 </div>
-                <button type="submit" class="submit-button"><i class="fas fa-save"></i> حفظ المنتج</button>
-                <div id="formErrorMessage" class="error-message"></div>
-            </form>
-        </div>
+
+                <div class="card products-table-card">
+                    <div class="table-responsive">
+                        <table class="products-table">
+                            <thead>
+                                <tr>
+                                    <th>الاسم التجاري</th>
+                                    <th>الكمية</th>
+                                    <th>سعر البيع</th>
+                                    <th>تاريخ الانتهاء</th>
+                                    <th>إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                    <p id="noProductsMessage" class="no-data-message" style="display: none;">لا توجد منتجات لعرضها.</p>
+                    <div id="loadingSpinner" class="loading-spinner"></div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <div id="scannerModal" class="modal">
@@ -159,32 +101,16 @@
             <h2>طباعة الباركود</h2>
             <div id="barcodeToPrint" class="barcode-to-print">
                 </div>
-            <button class="print-button" onclick="printDiv('barcodeToPrint')"><i class="fas fa-print"></i> طباعة</button>
+            <button class="btn btn-info print-button" onclick="printDiv('barcodeToPrint')"><i class="fas fa-print"></i> طباعة</button>
         </div>
     </div>
 
-    <nav class="navbar-bottom">
-        <a href="#" class="nav-item-bottom active" data-section="products">
-            <i class="fas fa-boxes"></i>
-            <span>المنتجات</span>
-        </a>
-        <a href="#" class="nav-item-bottom" data-section="suppliers">
-            <i class="fas fa-truck-moving"></i>
-            <span>الموردون</span>
-        </a>
-        <a href="#" class="nav-item-bottom" data-section="reports">
-            <i class="fas fa-chart-bar"></i>
-            <span>التقارير</span>
-        </a>
-        <a href="#" class="nav-item-bottom" id="logoutBtnBottom">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>خروج</span>
-        </a>
-    </nav>
+    <div id="customAlertContainer" class="custom-alert-container"></div>
 
     <script src="https://unpkg.com/@ericblade/quagga2@1.9.11/dist/quagga.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
+    <script type="module" src="auth.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 </html>
