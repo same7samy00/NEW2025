@@ -2,8 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 // Storage import is removed as image upload is removed.
-// import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
-import { auth, ensureAuthenticatedUser, signOutUser } from './auth.js'; // Import auth and check function
+import { auth, onAuthAndFirebaseReady, signOutUser } from './auth.js'; // Import auth and the new onAuthAndFirebaseReady function
 
 // Your web app's Firebase configuration - Using the provided config
 const firebaseConfig = {
@@ -47,15 +46,16 @@ export function showCustomAlert(message, type = 'success') {
 }
 
 // --- Global DOM Elements for Dashboard & Product Form ---
+// Dashboard Page Specific Elements
 const productsTableBody = document.getElementById('productsTableBody');
 const noProductsMessage = document.getElementById('noProductsMessage');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const searchInput = document.getElementById('searchInput');
 const filterCategory = document.getElementById('filterCategory');
 const addProductBtn = document.getElementById('addProductBtn');
-const scanSearchBarcodeBtn = document.getElementById('scanSearchBarcodeBtn'); // New button for search scan
+const scanSearchBarcodeBtn = document.getElementById('scanSearchBarcodeBtn');
 
-// Modals
+// Modals (Shared between dashboard and product-form for consistency)
 const scannerModal = document.getElementById('scannerModal');
 const closeScannerBtn = document.getElementById('closeScanner');
 const interactiveViewport = document.getElementById('interactive');
@@ -93,59 +93,61 @@ let allProductsData = []; // Store all products for client-side search/filter
 
 // --- Dashboard Page Logic ---
 if (window.location.pathname.includes('dashboard.html')) {
-    ensureAuthenticatedUser(); // Ensure user is logged in for this page
+    // This is the core change: use onAuthAndFirebaseReady to ensure auth is set up
+    onAuthAndFirebaseReady(user => {
+        if (!user) {
+            // User not logged in, auth.js has already handled redirect
+            return;
+        }
 
-    // Sidebar Toggle
-    const sidebar = document.getElementById('sidebar');
-    const menuToggleBtn = document.getElementById('menuToggleBtn');
-    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        // --- All dashboard-specific setup and event listeners go here ---
+        // Sidebar Toggle
+        const sidebar = document.getElementById('sidebar');
+        const menuToggleBtn = document.getElementById('menuToggleBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
-    if (menuToggleBtn) {
-        menuToggleBtn.addEventListener('click', () => {
-            sidebar.classList.add('open');
-        });
-    }
+        if (menuToggleBtn) {
+            menuToggleBtn.addEventListener('click', () => {
+                sidebar.classList.add('open');
+            });
+        }
 
-    if (closeSidebarBtn) {
-        closeSidebarBtn.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-        });
-    }
+        if (closeSidebarBtn) {
+            closeSidebarBtn.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+            });
+        }
 
-    // Load products on dashboard load (after auth check is handled by ensureAuthenticatedUser)
-    auth.onAuthStateChanged(user => {
-        if (user) { // Only load products if user is confirmed logged in
-            loadProducts();
+        loadProducts(); // Load products only after user is authenticated
+
+        // Add Product button redirects to product-form.html
+        if (addProductBtn) {
+            addProductBtn.addEventListener('click', () => {
+                window.location.href = 'product-form.html';
+            });
+        }
+
+        // Search input event listener
+        if (searchInput) {
+            searchInput.addEventListener('input', applySearchAndFilter);
+        }
+
+        // Filter select event listener
+        if (filterCategory) {
+            filterCategory.addEventListener('change', applySearchAndFilter);
+        }
+
+        // Scan for Search Barcode button
+        if (scanSearchBarcodeBtn) {
+            scanSearchBarcodeBtn.addEventListener('click', () => {
+                scannerResults.textContent = 'جاري البحث عن باركود...';
+                scannerModal.style.display = 'flex';
+                initBarcodeScanner(true); // Pass true to indicate it's for search
+            });
         }
     });
 
-    // Add Product button redirects to product-form.html
-    if (addProductBtn) {
-        addProductBtn.addEventListener('click', () => {
-            window.location.href = 'product-form.html';
-        });
-    }
-
-    // Search input event listener
-    if (searchInput) {
-        searchInput.addEventListener('input', applySearchAndFilter);
-    }
-
-    // Filter select event listener
-    if (filterCategory) {
-        filterCategory.addEventListener('change', applySearchAndFilter);
-    }
-
-    // Scan for Search Barcode button
-    if (scanSearchBarcodeBtn) {
-        scanSearchBarcodeBtn.addEventListener('click', () => {
-            scannerResults.textContent = 'جاري البحث عن باركود...';
-            scannerModal.style.display = 'flex';
-            initBarcodeScanner(true); // Pass true to indicate it's for search
-        });
-    }
-
-    // Function to calculate remaining days to expiry
+    // Function to calculate remaining days to expiry (utility function)
     function getDaysUntilExpiry(expiryDateStr) {
         if (!expiryDateStr) return null;
         const expiry = new Date(expiryDateStr);
@@ -283,7 +285,7 @@ if (window.location.pathname.includes('dashboard.html')) {
     // Delete Product
     async function deleteProduct(id) {
         // Using native confirm for now, can be replaced by custom confirm modal later
-        if (confirm("هل أنت متأكد أنك تريد حذف هذا المنتج نهائيًا؟")) { 
+        if (confirm("هل أنت متأكد أنك تريد حذف هذا المنتج نهائيًا؟")) {
             try {
                 await deleteDoc(doc(db, 'products', id));
                 showCustomAlert("تم حذف المنتج بنجاح!", 'success');
@@ -298,163 +300,169 @@ if (window.location.pathname.includes('dashboard.html')) {
 
 // --- Product Form Page Logic (product-form.html) ---
 if (window.location.pathname.includes('product-form.html')) {
-    ensureAuthenticatedUser(); // Ensure user is logged in for this page
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
-
-    if (productId) {
-        formPageTitle.textContent = 'تعديل المنتج';
-        loadProductForEdit(productId);
-    } else {
-        formPageTitle.textContent = 'إضافة منتج جديد';
-    }
-
-    // Form Submission
-    if (productForm) {
-        productForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            formErrorMessage.textContent = '';
-
-            const id = productIdInput.value;
-            const tradeName = tradeNameInput.value.trim();
-            const scientificName = scientificNameInput.value.trim();
-            const concentration = concentrationInput.value.trim();
-            const pharmaceuticalForm = pharmaceuticalFormInput.value.trim();
-            const quantity = parseFloat(quantityInput.value);
-            const purchasePrice = parseFloat(purchasePriceInput.value);
-            const salePrice = parseFloat(salePriceInput.value);
-            const unitType = unitTypeInput.value;
-            const subUnits = parseInt(subUnitsInput.value) || 1;
-            const subSubUnits = parseInt(subSubUnitsInput.value) || 1;
-            const productionDate = productionDateInput.value;
-            const expiryDate = expiryDateInput.value;
-            const barcode = barcodeInput.value.trim();
-            const supplier = supplierInput.value.trim();
-            const minStock = parseFloat(minStockInput.value);
-
-            if (!tradeName || isNaN(quantity) || isNaN(purchasePrice) || isNaN(salePrice) || isNaN(minStock)) {
-                formErrorMessage.textContent = 'الاسم التجاري، الكمية، سعر الشراء، سعر البيع، وحد أدنى للمخزون هي حقول مطلوبة ويجب أن تكون أرقامًا صحيحة.';
-                showCustomAlert('يرجى ملء جميع الحقول المطلوبة بشكل صحيح.', 'error');
-                return;
-            }
-            if (subUnits < 1 || subSubUnits < 1) {
-                formErrorMessage.textContent = 'يجب أن تكون الوحدات الفرعية أكبر من أو تساوي 1.';
-                showCustomAlert('يجب أن تكون الوحدات الفرعية أكبر من أو تساوي 1.', 'error');
-                return;
-            }
-            if (expiryDate && new Date(expiryDate) < new Date()) {
-                formErrorMessage.textContent = 'تاريخ الانتهاء لا يمكن أن يكون في الماضي.';
-                showCustomAlert('تاريخ الانتهاء لا يمكن أن يكون في الماضي.', 'error');
-                return;
-            }
-
-            try {
-                const productData = {
-                    tradeName,
-                    scientificName,
-                    concentration,
-                    pharmaceuticalForm,
-                    quantity,
-                    purchasePrice,
-                    salePrice,
-                    unitType,
-                    subUnits,
-                    subSubUnits,
-                    productionDate,
-                    expiryDate,
-                    barcode,
-                    supplier,
-                    minStock,
-                    lastUpdated: new Date().toISOString()
-                };
-
-                if (id) {
-                    await updateDoc(doc(db, 'products', id), productData);
-                    showCustomAlert("تم تحديث المنتج بنجاح!", 'success');
-                } else {
-                    await addDoc(collection(db, 'products'), productData);
-                    showCustomAlert("تم إضافة المنتج بنجاح!", 'success');
-                    productForm.reset(); // Clear form for new entry
-                    generatedBarcodeSvg.innerHTML = '';
-                    productIdInput.value = ''; // Ensure ID is clear for next add
-                }
-                // Optional: Redirect back to dashboard after successful save
-                // setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
-
-            } catch (error) {
-                console.error("Error saving product:", error);
-                formErrorMessage.textContent = 'حدث خطأ أثناء حفظ المنتج: ' + error.message;
-                showCustomAlert('حدث خطأ أثناء حفظ المنتج.', 'error');
-            }
-        });
-    }
-
-    // Load product data for editing
-    async function loadProductForEdit(id) {
-        try {
-            const productDoc = await getDoc(doc(db, 'products', id));
-            if (productDoc.exists()) {
-                const product = productDoc.data();
-                productIdInput.value = productDoc.id;
-                tradeNameInput.value = product.tradeName || '';
-                scientificNameInput.value = product.scientificName || '';
-                concentrationInput.value = product.concentration || '';
-                pharmaceuticalFormInput.value = product.pharmaceuticalForm || '';
-                quantityInput.value = product.quantity !== undefined ? product.quantity : '';
-                purchasePriceInput.value = product.purchasePrice !== undefined ? product.purchasePrice : '';
-                salePriceInput.value = product.salePrice !== undefined ? product.salePrice : '';
-                unitTypeInput.value = product.unitType || 'علبة';
-                subUnitsInput.value = product.subUnits !== undefined ? product.subUnits : 1;
-                subSubUnitsInput.value = product.subSubUnits !== undefined ? product.subSubUnits : 1;
-                productionDateInput.value = product.productionDate || '';
-                expiryDateInput.value = product.expiryDate || '';
-                barcodeInput.value = product.barcode || '';
-                supplierInput.value = product.supplier || '';
-                minStockInput.value = product.minStock !== undefined ? product.minStock : 10;
-
-                if (product.barcode) {
-                    JsBarcode("#generatedBarcode", product.barcode, {
-                        format: "CODE128",
-                        width: 2,
-                        height: 50,
-                        displayValue: true
-                    });
-                }
-            } else {
-                showCustomAlert("المنتج غير موجود.", 'error');
-                // Optional: Redirect to add new product if not found
-                // setTimeout(() => { window.location.href = 'product-form.html'; }, 1500);
-            }
-        } catch (error) {
-            console.error("Error loading product for edit:", error);
-            showCustomAlert('حدث خطأ أثناء تحميل بيانات المنتج.', 'error');
+    onAuthAndFirebaseReady(user => {
+        if (!user) {
+            // User not logged in, auth.js has already handled redirect
+            return;
         }
-    }
 
-    // Barcode Scan for Product Form
-    if (scanBarcodeBtn) {
-        scanBarcodeBtn.addEventListener('click', () => {
-            scannerResults.textContent = 'جاري البحث عن باركود...';
-            scannerModal.style.display = 'flex';
-            initBarcodeScanner(false); // Pass false to indicate it's for form input
-        });
-    }
+        // --- All product-form-specific setup and event listeners go here ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
 
-    // Barcode Generation for Product Form
-    if (generateBarcodeBtn) {
-        generateBarcodeBtn.addEventListener('click', () => {
-            const value = barcodeInput.value.trim() || `PHARM${Date.now()}`;
-            barcodeInput.value = value;
-            generatedBarcodeSvg.innerHTML = '';
-            JsBarcode("#generatedBarcode", value, {
-                format: "CODE128",
-                width: 2,
-                height: 50,
-                displayValue: true
+        if (productId) {
+            formPageTitle.textContent = 'تعديل المنتج';
+            loadProductForEdit(productId);
+        } else {
+            formPageTitle.textContent = 'إضافة منتج جديد';
+        }
+
+        // Form Submission
+        if (productForm) {
+            productForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                formErrorMessage.textContent = '';
+
+                const id = productIdInput.value;
+                const tradeName = tradeNameInput.value.trim();
+                const scientificName = scientificNameInput.value.trim();
+                const concentration = concentrationInput.value.trim();
+                const pharmaceuticalForm = pharmaceuticalFormInput.value.trim();
+                const quantity = parseFloat(quantityInput.value);
+                const purchasePrice = parseFloat(purchasePriceInput.value);
+                const salePrice = parseFloat(salePriceInput.value);
+                const unitType = unitTypeInput.value;
+                const subUnits = parseInt(subUnitsInput.value) || 1;
+                const subSubUnits = parseInt(subSubUnitsInput.value) || 1;
+                const productionDate = productionDateInput.value;
+                const expiryDate = expiryDateInput.value;
+                const barcode = barcodeInput.value.trim();
+                const supplier = supplierInput.value.trim();
+                const minStock = parseFloat(minStockInput.value);
+
+                if (!tradeName || isNaN(quantity) || isNaN(purchasePrice) || isNaN(salePrice) || isNaN(minStock)) {
+                    formErrorMessage.textContent = 'الاسم التجاري، الكمية، سعر الشراء، سعر البيع، وحد أدنى للمخزون هي حقول مطلوبة ويجب أن تكون أرقامًا صحيحة.';
+                    showCustomAlert('يرجى ملء جميع الحقول المطلوبة بشكل صحيح.', 'error');
+                    return;
+                }
+                if (subUnits < 1 || subSubUnits < 1) {
+                    formErrorMessage.textContent = 'يجب أن تكون الوحدات الفرعية أكبر من أو تساوي 1.';
+                    showCustomAlert('يجب أن تكون الوحدات الفرعية أكبر من أو تساوي 1.', 'error');
+                    return;
+                }
+                if (expiryDate && new Date(expiryDate) < new Date()) {
+                    formErrorMessage.textContent = 'تاريخ الانتهاء لا يمكن أن يكون في الماضي.';
+                    showCustomAlert('تاريخ الانتهاء لا يمكن أن يكون في الماضي.', 'error');
+                    return;
+                }
+
+                try {
+                    const productData = {
+                        tradeName,
+                        scientificName,
+                        concentration,
+                        pharmaceuticalForm,
+                        quantity,
+                        purchasePrice,
+                        salePrice,
+                        unitType,
+                        subUnits,
+                        subSubUnits,
+                        productionDate,
+                        expiryDate,
+                        barcode,
+                        supplier,
+                        minStock,
+                        lastUpdated: new Date().toISOString()
+                    };
+
+                    if (id) {
+                        await updateDoc(doc(db, 'products', id), productData);
+                        showCustomAlert("تم تحديث المنتج بنجاح!", 'success');
+                    } else {
+                        await addDoc(collection(db, 'products'), productData);
+                        showCustomAlert("تم إضافة المنتج بنجاح!", 'success');
+                        productForm.reset(); // Clear form for new entry
+                        generatedBarcodeSvg.innerHTML = '';
+                        productIdInput.value = ''; // Ensure ID is clear for next add
+                    }
+                    // Optional: Redirect back to dashboard after successful save
+                    // setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+
+                } catch (error) {
+                    console.error("Error saving product:", error);
+                    formErrorMessage.textContent = 'حدث خطأ أثناء حفظ المنتج: ' + error.message;
+                    showCustomAlert('حدث خطأ أثناء حفظ المنتج.', 'error');
+                }
             });
-        });
-    }
+        }
+
+        // Load product data for editing
+        async function loadProductForEdit(id) {
+            try {
+                const productDoc = await getDoc(doc(db, 'products', id));
+                if (productDoc.exists()) {
+                    const product = productDoc.data();
+                    productIdInput.value = productDoc.id;
+                    tradeNameInput.value = product.tradeName || '';
+                    scientificNameInput.value = product.scientificName || '';
+                    concentrationInput.value = product.concentration || '';
+                    pharmaceuticalFormInput.value = product.pharmaceuticalForm || '';
+                    quantityInput.value = product.quantity !== undefined ? product.quantity : '';
+                    purchasePriceInput.value = product.purchasePrice !== undefined ? product.purchasePrice : '';
+                    salePriceInput.value = product.salePrice !== undefined ? product.salePrice : '';
+                    unitTypeInput.value = product.unitType || 'علبة';
+                    subUnitsInput.value = product.subUnits !== undefined ? product.subUnits : 1;
+                    subSubUnitsInput.value = product.subSubUnits !== undefined ? product.subSubUnits : 1;
+                    productionDateInput.value = product.productionDate || '';
+                    expiryDateInput.value = product.expiryDate || '';
+                    barcodeInput.value = product.barcode || '';
+                    supplierInput.value = product.supplier || '';
+                    minStockInput.value = product.minStock !== undefined ? product.minStock : 10;
+
+                    if (product.barcode) {
+                        JsBarcode("#generatedBarcode", product.barcode, {
+                            format: "CODE128",
+                            width: 2,
+                            height: 50,
+                            displayValue: true
+                        });
+                    }
+                } else {
+                    showCustomAlert("المنتج غير موجود.", 'error');
+                    // Optional: Redirect to add new product if not found
+                    // setTimeout(() => { window.location.href = 'product-form.html'; }, 1500);
+                }
+            } catch (error) {
+                console.error("Error loading product for edit:", error);
+                showCustomAlert('حدث خطأ أثناء تحميل بيانات المنتج.', 'error');
+            }
+        }
+
+        // Barcode Scan for Product Form
+        if (scanBarcodeBtn) {
+            scanBarcodeBtn.addEventListener('click', () => {
+                scannerResults.textContent = 'جاري البحث عن باركود...';
+                scannerModal.style.display = 'flex';
+                initBarcodeScanner(false); // Pass false to indicate it's for form input
+            });
+        }
+
+        // Barcode Generation for Product Form
+        if (generateBarcodeBtn) {
+            generateBarcodeBtn.addEventListener('click', () => {
+                const value = barcodeInput.value.trim() || `PHARM${Date.now()}`;
+                barcodeInput.value = value;
+                generatedBarcodeSvg.innerHTML = '';
+                JsBarcode("#generatedBarcode", value, {
+                    format: "CODE128",
+                    width: 2,
+                    height: 50,
+                    displayValue: true
+                });
+            });
+        }
+    });
 }
 
 // --- Common Modal & Barcode Scanner Logic ---
@@ -533,7 +541,7 @@ function initBarcodeScanner(isSearchMode = false) {
         const code = data.codeResult.code;
         console.log("Barcode detected:", code);
         scannerResults.textContent = `تم العثور على الباركود: ${code}`;
-        
+
         if (isSearchMode) {
             if (searchInput) {
                 searchInput.value = code;
@@ -553,7 +561,7 @@ function initBarcodeScanner(isSearchMode = false) {
                 }
             }
         }
-        
+
         if (window.Quagga) {
             Quagga.stop();
             isScannerInitialized = false;
@@ -629,7 +637,7 @@ window.printDiv = function(divId) {
         showCustomAlert("خطأ في الطباعة: العنصر غير موجود.", 'error');
         return;
     }
-    
+
     // Create a new window for printing
     var printWindow = window.open('', '_blank');
     printWindow.document.write('<html><head><title>طباعة الباركود</title>');
@@ -648,7 +656,7 @@ window.printDiv = function(divId) {
         printWindow.close();
         showCustomAlert("تم إرسال الباركود للطباعة.", 'success');
     };
-    
+
     // After printing, ensure original modal is closed and state is clean
     if (printBarcodeModal) printBarcodeModal.style.display = 'none';
 };
