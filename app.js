@@ -1,19 +1,19 @@
 // app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-// No longer importing storage as image upload is removed
+// No longer importing storage as image upload is removed (but keep firebase config for storageBucket)
 // import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 import { auth, checkAuthStateAndRedirect, signOutUser } from './auth.js'; // Import auth and check function
 
-// Your web app's Firebase configuration - REPLACE WITH YOUR ACTUAL CONFIG
+// Your web app's Firebase configuration - Using the provided config
 const firebaseConfig = {
-    apiKey: "AIzaSyC9eufzO00_JtbdVoDrw-bJfF1PY3meYoE",
-    authDomain: "new2025-d2fba.firebaseapp.com",
-    projectId: "new2025-d2fba",
-    storageBucket: "new2025-d2fba.firebasestorage.app", // Still needed even if not used directly
-    messagingSenderId: "239931222059",
-    appId: "1:239931222059:web:6275e5aa6577fb14f4e26e",
-    measurementId: "G-3F4TJ0K34J"
+  apiKey: "AIzaSyC9eufzO00_JtbdVoDrw-bJfF1PY3meYoE",
+  authDomain: "new2025-d2fba.firebaseapp.com",
+  projectId: "new2025-d2fba",
+  storageBucket: "new2025-d2fba.firebasestorage.app",
+  messagingSenderId: "239931222059",
+  appId: "1:239931222059:web:6275e5aa6577fb14f4e26e",
+  measurementId: "G-3F4TJ0K34J"
 };
 
 const app = initializeApp(firebaseConfig);
