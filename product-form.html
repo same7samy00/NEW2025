@@ -26,35 +26,35 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="tradeName">الاسم التجاري:</label>
-                        <input type="text" id="tradeName" required>
+                        <input type="text" id="tradeName" class="form-input" required>
                     </div>
                     <div class="form-group">
                         <label for="scientificName">الاسم العلمي:</label>
-                        <input type="text" id="scientificName">
+                        <input type="text" id="scientificName" class="form-input">
                     </div>
                     <div class="form-group">
                         <label for="concentration">التركيز:</label>
-                        <input type="text" id="concentration">
+                        <input type="text" id="concentration" class="form-input">
                     </div>
                     <div class="form-group">
                         <label for="pharmaceuticalForm">الشكل الصيدلي:</label>
-                        <input type="text" id="pharmaceuticalForm">
+                        <input type="text" id="pharmaceuticalForm" class="form-input">
                     </div>
                     <div class="form-group">
                         <label for="quantity">الكمية الإجمالية (علبة):</label>
-                        <input type="number" id="quantity" min="0" required>
+                        <input type="number" id="quantity" min="0" class="form-input" required>
                     </div>
                     <div class="form-group">
                         <label for="purchasePrice">سعر الشراء (للعُلبة):</label>
-                        <input type="number" id="purchasePrice" step="0.01" min="0" required>
+                        <input type="number" id="purchasePrice" step="0.01" min="0" class="form-input" required>
                     </div>
                     <div class="form-group">
                         <label for="salePrice">سعر البيع (للعُلبة):</label>
-                        <input type="number" id="salePrice" step="0.01" min="0" required>
+                        <input type="number" id="salePrice" step="0.01" min="0" class="form-input" required>
                     </div>
                     <div class="form-group">
                         <label for="unitType">وحدة البيع الرئيسية:</label>
-                        <select id="unitType" required>
+                        <select id="unitType" class="form-select" required>
                             <option value="علبة">علبة</option>
                             <option value="عبوة">عبوة</option>
                             <option value="قطعة">قطعة</option>
@@ -62,25 +62,25 @@
                         </select>
                     </div>
                      <div class="form-group">
-                        <label for="subUnits">عدد الوحدات الفرعية لكل وحدة رئيسية (مثل: 10 أشرطة في علبة):</label>
-                        <input type="number" id="subUnits" min="1" value="1" placeholder="مثال: 10">
+                        <label for="subUnits">عدد الوحدات الفرعية لكل وحدة رئيسية (مثال: 10 أشرطة في علبة):</label>
+                        <input type="number" id="subUnits" min="1" value="1" placeholder="مثال: 10" class="form-input">
                     </div>
                     <div class="form-group">
-                        <label for="subSubUnits">عدد الوحدات الفرعية الفرعية (مثل: 10 حبات في شريط):</label>
-                        <input type="number" id="subSubUnits" min="1" value="1" placeholder="مثال: 10">
+                        <label for="subSubUnits">عدد الوحدات الفرعية الفرعية (مثال: 10 حبات في شريط):</label>
+                        <input type="number" id="subSubUnits" min="1" value="1" placeholder="مثال: 10" class="form-input">
                     </div>
                     <div class="form-group">
                         <label for="productionDate">تاريخ الإنتاج:</label>
-                        <input type="date" id="productionDate">
+                        <input type="date" id="productionDate" class="form-input">
                     </div>
                     <div class="form-group">
                         <label for="expiryDate">تاريخ الانتهاء:</label>
-                        <input type="date" id="expiryDate" required>
+                        <input type="date" id="expiryDate" class="form-input" required>
                     </div>
                     <div class="form-group">
                         <label for="barcodeInput">الباركود:</label>
                         <div class="input-group">
-                            <input type="text" id="barcodeInput" placeholder="مسح أو إدخال باركود">
+                            <input type="text" id="barcodeInput" placeholder="مسح أو إدخال باركود" class="form-input">
                             <button type="button" id="scanBarcodeBtn" class="btn btn-secondary btn-icon" title="مسح باركود"><i class="fas fa-barcode"></i></button>
                             <button type="button" id="generateBarcodeBtn" class="btn btn-secondary btn-icon" title="توليد باركود"><i class="fas fa-magic"></i></button>
                         </div>
@@ -88,11 +88,11 @@
                     </div>
                     <div class="form-group">
                         <label for="supplier">المورد:</label>
-                        <input type="text" id="supplier">
+                        <input type="text" id="supplier" class="form-input">
                     </div>
                     <div class="form-group">
                         <label for="minStock">حد أدنى للمخزون (للتنبيه):</label>
-                        <input type="number" id="minStock" min="0" value="10">
+                        <input type="number" id="minStock" min="0" value="10" class="form-input">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save"></i> حفظ المنتج</button>
