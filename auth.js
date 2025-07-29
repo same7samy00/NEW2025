@@ -3,8 +3,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut as firebaseSignOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { showCustomAlert } from './app.js'; // Import custom alert
 
+// Your web app's Firebase configuration - REPLACE WITH YOUR ACTUAL CONFIG
 const firebaseConfig = {
-    apiKey: "AIzaSyC9eufzO00_JtbdVoDrw-bJfF1PY3meYoE", // استبدل هذا بمفتاح API الخاص بك
+    apiKey: "AIzaSyC9eufzO00_JtbdVoDrw-bJfF1PY3meYoE",
     authDomain: "new2025-d2fba.firebaseapp.com",
     projectId: "new2025-d2fba",
     storageBucket: "new2025-d2fba.firebasestorage.app",
@@ -14,7 +15,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app); // Export auth instance
+export const auth = getAuth(app); // Export auth instance AFTER initialization
 
 // --- Login Page Logic ---
 const loginForm = document.getElementById('loginForm');
@@ -59,6 +60,7 @@ if (loginForm) {
 // --- Auth State Management for protected pages ---
 // This function will be called on protected pages (dashboard, product-form)
 export function checkAuthStateAndRedirect() {
+    // onAuthStateChanged ensures auth is initialized before checking state
     onAuthStateChanged(auth, (user) => {
         if (!user) {
             console.log("User not logged in. Redirecting to login.");
@@ -67,7 +69,7 @@ export function checkAuthStateAndRedirect() {
                 window.location.href = "index.html";
             }, 1000);
         }
-        // If user is logged in, no action needed, app.js will proceed.
+        // If user is logged in, no action needed. app.js will handle specific page logic.
     });
 }
 
@@ -85,15 +87,15 @@ export async function signOutUser() {
     }
 }
 
-// Attach logout to buttons in dashboard/product-form
+// Attach logout to buttons in dashboard/product-form (ensure these IDs exist on the page)
 document.addEventListener('DOMContentLoaded', () => {
     const logoutBtnSidebar = document.getElementById('logoutBtnSidebar');
-    const logoutBtnTop = document.getElementById('logoutBtnTop'); // For desktop logout button if kept
+    // const logoutBtnTop = document.getElementById('logoutBtnTop'); // Removed as per new design
 
     if (logoutBtnSidebar) {
         logoutBtnSidebar.addEventListener('click', signOutUser);
     }
-    if (logoutBtnTop) { // Check if this button exists on the page
-        logoutBtnTop.addEventListener('click', signOutUser);
-    }
+    // if (logoutBtnTop) {
+    //     logoutBtnTop.addEventListener('click', signOutUser);
+    // }
 });
