@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة منتج - نظام الصيدلية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="form-page-wrapper">
+        <header class="topbar">
+            <button class="back-btn" onclick="window.location.href='dashboard.html'"><i class="fas fa-arrow-right"></i></button>
+            <div class="topbar-title" id="formPageTitle">إدارة المنتج</div>
+            <div class="topbar-actions">
+                </div>
+        </header>
+
+        <main class="form-content-area">
+            <form id="productForm" class="product-form">
+                <input type="hidden" id="productId">
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="tradeName">الاسم التجاري:</label>
+                        <input type="text" id="tradeName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="scientificName">الاسم العلمي:</label>
+                        <input type="text" id="scientificName">
+                    </div>
+                    <div class="form-group">
+                        <label for="concentration">التركيز:</label>
+                        <input type="text" id="concentration">
+                    </div>
+                    <div class="form-group">
+                        <label for="pharmaceuticalForm">الشكل الصيدلي:</label>
+                        <input type="text" id="pharmaceuticalForm">
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">الكمية الإجمالية (علبة):</label>
+                        <input type="number" id="quantity" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="purchasePrice">سعر الشراء (للعُلبة):</label>
+                        <input type="number" id="purchasePrice" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="salePrice">سعر البيع (للعُلبة):</label>
+                        <input type="number" id="salePrice" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="unitType">وحدة البيع الرئيسية:</label>
+                        <select id="unitType" required>
+                            <option value="علبة">علبة</option>
+                            <option value="عبوة">عبوة</option>
+                            <option value="قطعة">قطعة</option>
+                            <option value="زجاجة">زجاجة</option>
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="subUnits">عدد الوحدات الفرعية لكل وحدة رئيسية (مثل: 10 أشرطة في علبة):</label>
+                        <input type="number" id="subUnits" min="1" value="1" placeholder="مثال: 10">
+                    </div>
+                    <div class="form-group">
+                        <label for="subSubUnits">عدد الوحدات الفرعية الفرعية (مثل: 10 حبات في شريط):</label>
+                        <input type="number" id="subSubUnits" min="1" value="1" placeholder="مثال: 10">
+                    </div>
+                    <div class="form-group">
+                        <label for="productionDate">تاريخ الإنتاج:</label>
+                        <input type="date" id="productionDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="expiryDate">تاريخ الانتهاء:</label>
+                        <input type="date" id="expiryDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="barcodeInput">الباركود:</label>
+                        <div class="input-group">
+                            <input type="text" id="barcodeInput" placeholder="مسح أو إدخال باركود">
+                            <button type="button" id="scanBarcodeBtn" class="btn btn-secondary btn-icon" title="مسح باركود"><i class="fas fa-barcode"></i></button>
+                            <button type="button" id="generateBarcodeBtn" class="btn btn-secondary btn-icon" title="توليد باركود"><i class="fas fa-magic"></i></button>
+                        </div>
+                        <svg id="generatedBarcode" class="generated-barcode"></svg>
+                    </div>
+                    <div class="form-group">
+                        <label for="supplier">المورد:</label>
+                        <input type="text" id="supplier">
+                    </div>
+                    <div class="form-group">
+                        <label for="minStock">حد أدنى للمخزون (للتنبيه):</label>
+                        <input type="number" id="minStock" min="0" value="10">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save"></i> حفظ المنتج</button>
+                <div id="formErrorMessage" class="error-message"></div>
+            </form>
+        </main>
+    </div>
+
+    <div id="scannerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeScanner">&times;</span>
+            <h2>مسح الباركود</h2>
+            <div id="interactive" class="viewport"></div>
+            <div class="scanner-results" id="scannerResults"></div>
+        </div>
+    </div>
+
+    <div id="customAlertContainer" class="custom-alert-container"></div>
+
+    <script src="https://unpkg.com/@ericblade/quagga2@1.9.11/dist/quagga.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
