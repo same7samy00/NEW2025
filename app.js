@@ -1,7 +1,8 @@
 // app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+// No longer importing storage as image upload is removed
+// import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 import { auth, checkAuthStateAndRedirect, signOutUser } from './auth.js'; // Import auth and check function
 
 // Your web app's Firebase configuration - REPLACE WITH YOUR ACTUAL CONFIG
@@ -9,7 +10,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyC9eufzO00_JtbdVoDrw-bJfF1PY3meYoE",
     authDomain: "new2025-d2fba.firebaseapp.com",
     projectId: "new2025-d2fba",
-    storageBucket: "new2025-d2fba.firebasestorage.app",
+    storageBucket: "new2025-d2fba.firebasestorage.app", // Still needed even if not used directly
     messagingSenderId: "239931222059",
     appId: "1:239931222059:web:6275e5aa6577fb14f4e26e",
     measurementId: "G-3F4TJ0K34J"
@@ -17,12 +18,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
+// const storage = getStorage(app); // No longer needed as image upload is removed
 
 // --- Custom Alert/Notification Function ---
+// This function needs to be defined outside any specific page logic
+// so it's available for auth.js and other parts of app.js.
 export function showCustomAlert(message, type = 'success') {
     const alertContainer = document.getElementById('customAlertContainer');
-    if (!alertContainer) return;
+    if (!alertContainer) return; // Ensure the container exists
 
     const alertDiv = document.createElement('div');
     alertDiv.classList.add('custom-alert');
@@ -106,7 +109,7 @@ if (window.location.pathname.includes('dashboard.html')) {
         });
     }
 
-    // Load products on dashboard load
+    // Load products on dashboard load (after auth check)
     auth.onAuthStateChanged(user => {
         if (user) {
             loadProducts();
@@ -278,12 +281,6 @@ if (window.location.pathname.includes('dashboard.html')) {
     async function deleteProduct(id) {
         if (confirm("هل أنت متأكد أنك تريد حذف هذا المنتج نهائيًا؟")) { // Replace with custom confirm later
             try {
-                // Find the product data to get imagePath
-                const productToDelete = allProductsData.find(p => p.id === id);
-                if (productToDelete && productToDelete.imagePath) {
-                    const imageRef = ref(storage, productToDelete.imagePath);
-                    await deleteObject(imageRef).catch(e => console.warn("Could not delete old image:", e.message));
-                }
                 await deleteDoc(doc(db, 'products', id));
                 showCustomAlert("تم حذف المنتج بنجاح!", 'success');
                 loadProducts();
@@ -463,8 +460,6 @@ document.querySelectorAll('.close-button').forEach(btn => {
     btn.addEventListener('click', () => {
         if (scannerModal) scannerModal.style.display = 'none';
         if (printBarcodeModal) printBarcodeModal.style.display = 'none';
-        // Note: productModal is now product-form.html, so it's a page navigation
-        // If you had other modals (e.g., confirmation modals), they'd be handled here.
 
         // Stop scanner if running
         if (window.Quagga && Quagga.initialized) {
@@ -540,7 +535,7 @@ function initBarcodeScanner(isSearchMode = false) {
                 searchInput.value = code;
                 applySearchAndFilter(); // Trigger search immediately
             }
-        } else {
+        } else { // Form mode
             if (barcodeInput) {
                 barcodeInput.value = code;
                 if (generatedBarcodeSvg) { // Generate SVG for form
