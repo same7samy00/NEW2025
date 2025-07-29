@@ -3,15 +3,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut as firebaseSignOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { showCustomAlert } from './app.js'; // Import custom alert
 
-// Your web app's Firebase configuration - REPLACE WITH YOUR ACTUAL CONFIG
+// Your web app's Firebase configuration - Using the provided config
 const firebaseConfig = {
-    apiKey: "AIzaSyC9eufzO00_JtbdVoDrw-bJfF1PY3meYoE",
-    authDomain: "new2025-d2fba.firebaseapp.com",
-    projectId: "new2025-d2fba",
-    storageBucket: "new2025-d2fba.firebasestorage.app",
-    messagingSenderId: "239931222059",
-    appId: "1:239931222059:web:6275e5aa6577fb14f4e26e",
-    measurementId: "G-3F4TJ0K34J"
+  apiKey: "AIzaSyC9eufzO00_JtbdVoDrw-bJfF1PY3meYoE",
+  authDomain: "new2025-d2fba.firebaseapp.com",
+  projectId: "new2025-d2fba",
+  storageBucket: "new2025-d2fba.firebasestorage.app",
+  messagingSenderId: "239931222059",
+  appId: "1:239931222059:web:6275e5aa6577fb14f4e26e",
+  measurementId: "G-3F4TJ0K34J"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutBtnSidebar) {
         logoutBtnSidebar.addEventListener('click', signOutUser);
     }
-    // if (logoutBtnTop) {
+    // if (logoutBtnTop) { // This button is removed in current HTML
     //     logoutBtnTop.addEventListener('click', signOutUser);
     // }
 });
