@@ -1,16 +1,16 @@
 // app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-// No longer importing storage as image upload is removed (but keep firebase config for storageBucket)
+// Storage import is removed as image upload is removed.
 // import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
-import { auth, checkAuthStateAndRedirect, signOutUser } from './auth.js'; // Import auth and check function
+import { auth, ensureAuthenticatedUser, signOutUser } from './auth.js'; // Import auth and check function
 
 // Your web app's Firebase configuration - Using the provided config
 const firebaseConfig = {
   apiKey: "AIzaSyC9eufzO00_JtbdVoDrw-bJfF1PY3meYoE",
   authDomain: "new2025-d2fba.firebaseapp.com",
   projectId: "new2025-d2fba",
-  storageBucket: "new2025-d2fba.firebasestorage.app",
+  storageBucket: "new2025-d2fba.firebasestorage.app", // Still part of config but not actively used for file ops
   messagingSenderId: "239931222059",
   appId: "1:239931222059:web:6275e5aa6577fb14f4e26e",
   measurementId: "G-3F4TJ0K34J"
@@ -18,14 +18,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-// const storage = getStorage(app); // No longer needed as image upload is removed
+// const storage = getStorage(app); // Storage is no longer needed
 
 // --- Custom Alert/Notification Function ---
 // This function needs to be defined outside any specific page logic
 // so it's available for auth.js and other parts of app.js.
 export function showCustomAlert(message, type = 'success') {
     const alertContainer = document.getElementById('customAlertContainer');
-    if (!alertContainer) return; // Ensure the container exists
+    if (!alertContainer) {
+        console.warn("Custom alert container not found. Alert: " + message);
+        return; // Exit if container doesn't exist (e.g., on login page before full DOM load)
+    }
 
     const alertDiv = document.createElement('div');
     alertDiv.classList.add('custom-alert');
@@ -90,7 +93,7 @@ let allProductsData = []; // Store all products for client-side search/filter
 
 // --- Dashboard Page Logic ---
 if (window.location.pathname.includes('dashboard.html')) {
-    checkAuthStateAndRedirect(); // Check if user is logged in
+    ensureAuthenticatedUser(); // Ensure user is logged in for this page
 
     // Sidebar Toggle
     const sidebar = document.getElementById('sidebar');
@@ -109,9 +112,9 @@ if (window.location.pathname.includes('dashboard.html')) {
         });
     }
 
-    // Load products on dashboard load (after auth check)
+    // Load products on dashboard load (after auth check is handled by ensureAuthenticatedUser)
     auth.onAuthStateChanged(user => {
-        if (user) {
+        if (user) { // Only load products if user is confirmed logged in
             loadProducts();
         }
     });
@@ -245,7 +248,7 @@ if (window.location.pathname.includes('dashboard.html')) {
             row.insertCell().textContent = product.quantity !== undefined ? `${product.quantity} ${product.unitType || 'علبة'}` : '';
             row.insertCell().textContent = product.salePrice !== undefined ? `${product.salePrice.toFixed(2)} EGP` : '';
             row.insertCell().textContent = product.expiryDate || '';
-            // Barcode (full text on desktop, shortened on mobile)
+            // Barcode text for dashboard table
             const barcodeCell = row.insertCell();
             barcodeCell.textContent = product.barcode || '';
             // Action buttons
@@ -279,7 +282,8 @@ if (window.location.pathname.includes('dashboard.html')) {
 
     // Delete Product
     async function deleteProduct(id) {
-        if (confirm("هل أنت متأكد أنك تريد حذف هذا المنتج نهائيًا؟")) { // Replace with custom confirm later
+        // Using native confirm for now, can be replaced by custom confirm modal later
+        if (confirm("هل أنت متأكد أنك تريد حذف هذا المنتج نهائيًا؟")) { 
             try {
                 await deleteDoc(doc(db, 'products', id));
                 showCustomAlert("تم حذف المنتج بنجاح!", 'success');
@@ -294,7 +298,7 @@ if (window.location.pathname.includes('dashboard.html')) {
 
 // --- Product Form Page Logic (product-form.html) ---
 if (window.location.pathname.includes('product-form.html')) {
-    checkAuthStateAndRedirect(); // Check if user is logged in
+    ensureAuthenticatedUser(); // Ensure user is logged in for this page
 
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
@@ -630,7 +634,7 @@ window.printDiv = function(divId) {
     var printWindow = window.open('', '_blank');
     printWindow.document.write('<html><head><title>طباعة الباركود</title>');
     // Copy necessary CSS for printing
-    printWindow.document.write('<link rel="stylesheet" href="style.css">');
+    printWindow.document.write('<link rel="stylesheet" href="style.css">'); // Include your main CSS
     printWindow.document.write('</head><body>');
     printWindow.document.write('<div style="font-family: \'Cairo\', sans-serif; text-align: center;">');
     printWindow.document.write(printContents.innerHTML);
